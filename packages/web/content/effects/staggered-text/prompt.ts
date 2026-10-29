@@ -37,7 +37,7 @@ function specLines(p: StaggeredValues, lang: Locale): string[] {
   if (lang === "en") {
     return [
       "- Split rules: split the text into units — every CJK character is its own unit, Latin runs stay whole words, spaces become `\\u00A0` (so they keep width inside inline-block units), each `\\n` becomes its own block line.",
-      "- Per unit: initial `opacity 0`, `translateY(${rise}px)`, `filter: blur(${blur}px)`; animate to `opacity 1`, `translateY(0)`, `blur(0)`.",
+      `- Per unit: initial \`opacity 0\`, \`translateY(${n(p.rise)}px)\`, \`filter: blur(${n(p.blur)}px)\`; animate to \`opacity 1\`, \`translateY(0)\`, \`blur(0)\`.`,
       `- Timing: per-unit duration ${n(p.duration)}ms, delay = unitIndex × ${n(p.stagger)}ms, easing \`${C.easing}\` (never linear).`,
       `- Type: font-size ${C.text.fontSize}px, line-height ${C.text.lineHeight}, font-weight ${C.text.fontWeight}, letter-spacing ${C.text.letterSpacing}, color ${C.text.color}, max-width ${C.text.maxWidth}px.`,
       "- Layout: units are `inline-block` with `white-space: pre`; the paragraph must be laid out once, so the final state has zero layout shift.",
@@ -47,7 +47,7 @@ function specLines(p: StaggeredValues, lang: Locale): string[] {
   }
   return [
     "- 拆分规则：每个中文字符是一个单元；连续拉丁文保持为单词；空格转成 `\\u00A0`（保证 inline-block 单元里保留宽度）；每个 `\\n` 渲染成一个 block 行。",
-    "- 每个单元：初始 `opacity 0`、`translateY(${rise}px)`、`filter: blur(${blur}px)`；动画到 `opacity 1`、`translateY(0)`、`blur(0)`。",
+    `- 每个单元：初始 \`opacity 0\`、\`translateY(${n(p.rise)}px)\`、\`filter: blur(${n(p.blur)}px)\`；动画到 \`opacity 1\`、\`translateY(0)\`、\`blur(0)\`。`,
     `- 时间：单元时长 ${n(p.duration)}ms，延迟 = 单元序号 × ${n(p.stagger)}ms，缓动 \`${C.easing}\`（不要用 linear）。`,
     `- 字体：${C.text.fontSize}px、行高 ${C.text.lineHeight}、字重 ${C.text.fontWeight}、字距 ${C.text.letterSpacing}、颜色 ${C.text.color}、最大宽度 ${C.text.maxWidth}px。`,
     "- 布局：单元是 `inline-block` 且 `white-space: pre`；整段只布局一次，动画结束后不允许有任何位移。",

@@ -135,13 +135,13 @@ export const staggeredTextSpec: EffectSpec = {
       notes: {
         zh: [
           '文件顶部加 `"use client"`；用 `gsap.context()` 在 `useEffect` 里创建、在 cleanup 里 `revert()`。',
-          "先按拆分规则把文字渲染成 span，再用 `gsap.fromTo(spans, { opacity: 0, y: rise, filter: `blur(${blur}px)` }, { opacity: 1, y: 0, filter: \"blur(0px)\", duration: duration / 1000, stagger: stagger / 1000, ease: \"power3.out\" })`。",
+          `先按拆分规则把文字渲染成 span，再用 \`gsap.fromTo(spans, { opacity: 0, y: rise, filter: \`blur(${STAGGERED.defaults.blur}px)\` }, { opacity: 1, y: 0, filter: "blur(0px)", duration: duration / 1000, stagger: stagger / 1000, ease: "power3.out" })\`。`,
           "用 `gsap.matchMedia()` 判断 `prefers-reduced-motion`：不满足时直接 `gsap.set(spans, { opacity: 1, y: 0, filter: \"none\" })`，不要用 JS 分支改 DOM 结构（避免 SSR 水合不一致）。",
           "容器加 `aria-label`，动画 span 加 `aria-hidden`。",
         ],
         en: [
           'Add `"use client"`; create the animation inside `gsap.context()` in `useEffect` and call `revert()` in the cleanup.',
-          "Render the units as spans first, then run `gsap.fromTo(spans, { opacity: 0, y: rise, filter: `blur(${blur}px)` }, { opacity: 1, y: 0, filter: \"blur(0px)\", duration: duration / 1000, stagger: stagger / 1000, ease: \"power3.out\" })`.",
+          `Render the units as spans first, then run \`gsap.fromTo(spans, { opacity: 0, y: rise, filter: \`blur(${STAGGERED.defaults.blur}px)\` }, { opacity: 1, y: 0, filter: "blur(0px)", duration: duration / 1000, stagger: stagger / 1000, ease: "power3.out" })\`.`,
           "Handle reduced motion with `gsap.matchMedia()`: when `prefers-reduced-motion: reduce`, `gsap.set(spans, { opacity: 1, y: 0, filter: \"none\" })` instead of animating — never branch the DOM structure, so SSR and client markup stay identical.",
           "Put `aria-label` on the container and `aria-hidden` on the animated spans.",
         ],
