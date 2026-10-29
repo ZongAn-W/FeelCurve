@@ -1,6 +1,8 @@
 import type { ComponentType } from "react";
 import type { Locale } from "@/lib/i18n";
 
+export type { Locale };
+
 export type Localized = Record<Locale, string>;
 
 export type Stack = "react" | "vanilla" | "gsap" | "vue";

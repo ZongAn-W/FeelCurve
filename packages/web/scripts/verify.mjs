@@ -259,13 +259,31 @@ try {
     JSON.stringify(navType),
   );
 
+  const liveSlugs = [
+    "magnetic-button",
+    "spotlight-card",
+    "staggered-text",
+    "liquid-glass-button",
+    "submit-button",
+    "jelly-toggle",
+    "hold-to-delete",
+    "animated-number",
+    "skeleton-shimmer",
+    "stagger-list",
+    "toast-exit",
+    "nav-indicator",
+    "modal-entrance",
+    "theme-reveal",
+  ];
+
   const cardTags = await page.$$eval("[data-effect-card]", (cards) =>
     cards.map((card) => card.tagName),
   );
   check(
     "home cards are not one big link",
-    cardTags.length === 4 && cardTags.every((tag) => tag === "ARTICLE"),
-    cardTags.join(", "),
+    cardTags.length === liveSlugs.length &&
+      cardTags.every((tag) => tag === "ARTICLE"),
+    `${cardTags.length} cards`,
   );
 
   const detailLinks = await page.$$eval("[data-effect-link]", (links) =>
@@ -273,12 +291,7 @@ try {
   );
   check(
     "each effect has its own detail link",
-    [
-      "magnetic-button",
-      "spotlight-card",
-      "staggered-text",
-      "liquid-glass-button",
-    ].every((slug) => detailLinks.includes(slug)),
+    liveSlugs.every((slug) => detailLinks.includes(slug)),
     detailLinks.join(", "),
   );
 
@@ -1190,6 +1203,26 @@ try {
   }
 
   await mobile.close();
+
+  // ---------- every live effect detail page renders its demo and prompt ----------
+  for (const slug of liveSlugs) {
+    await page.goto(`${BASE}/effects/${slug}`, {
+      waitUntil: "domcontentloaded",
+    });
+    const hasDemo = await page
+      .waitForSelector(`[data-demo="${slug}"]`, { timeout: 20000 })
+      .then(() => true)
+      .catch(() => false);
+    const prompt = hasDemo ? await promptText(page).catch(() => "") : "";
+    const heading = await page
+      .$eval("h1", (node) => node.textContent?.trim() ?? "")
+      .catch(() => "");
+    check(
+      `detail page /effects/${slug} renders its demo and prompt`,
+      hasDemo && heading.length > 0 && prompt.length > 400,
+      `${heading} · ${prompt.length} chars`,
+    );
+  }
 
   check(
     "no console or page errors",
