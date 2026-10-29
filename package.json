@@ -1,0 +1,14 @@
+{
+  "name": "feelcurve",
+  "private": true,
+  "version": "0.1.0",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:web": "npm run dev --workspace @feelcurve/web",
+    "dev:api": "npm run start:dev --workspace @feelcurve/api",
+    "build:web": "npm run build --workspace @feelcurve/web",
+    "build:api": "npm run build --workspace @feelcurve/api"
+  }
+}

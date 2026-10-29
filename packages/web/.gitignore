@@ -1,0 +1,12 @@
+node_modules
+.next
+.shots
+.edge-profile
+.npm-cache
+.npm-logs
+exports
+*.log
+.DS_Store
+.env*
+!.env.example
+*.tsbuildinfo
