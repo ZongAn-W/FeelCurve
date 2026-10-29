@@ -1,18 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import localFont from "next/font/local";
 import { useLocale } from "@/components/providers/Providers";
 import { liveModules } from "@/content/effects/registry";
 import { HeroWorkbench } from "./HeroWorkbench";
 import styles from "./HomeHero.module.css";
-
-const displayFont = localFont({
-  src: "./fonts/feelcurve-display.woff2",
-  weight: "500",
-  display: "swap",
-  adjustFontFallback: false,
-});
 
 export function HomeHero() {
   const { locale, t } = useLocale();
@@ -22,7 +14,7 @@ export function HomeHero() {
       <div className={styles.intro}>
         <h1
           id="home-title"
-          className={`${styles.title} ${locale === "en" ? styles.titleEnglish : ""} ${displayFont.className}`}
+          className={`${styles.title} ${locale === "en" ? styles.titleEnglish : ""}`}
         >
           <span>{t.hero.title}</span>
           <span>{t.hero.titleAccent}</span>

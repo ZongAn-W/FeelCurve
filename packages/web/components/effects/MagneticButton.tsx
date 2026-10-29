@@ -9,11 +9,7 @@ import {
   useTransform,
 } from "motion/react";
 import { useCallback, useRef } from "react";
-
-const FALLOFF = 1.6;
-const LABEL_FOLLOW = 0.35;
-const GLOW_DIAMETER = 220;
-const GLOW_COLOR = "rgba(201, 244, 90, 0.34)";
+import { MAGNETIC } from "@/content/effects/magnetic-button/constants";
 
 export type MagneticButtonProps = {
   children: React.ReactNode;
@@ -36,12 +32,12 @@ const clamp = (value: number, min: number, max: number) =>
 
 export function MagneticButton({
   children,
-  radius = 140,
-  pull = 16,
-  stiffness = 260,
-  damping = 20,
-  scale = 1.03,
-  glow = true,
+  radius = MAGNETIC.defaults.radius,
+  pull = MAGNETIC.defaults.pull,
+  stiffness = MAGNETIC.defaults.stiffness,
+  damping = MAGNETIC.defaults.damping,
+  scale = MAGNETIC.defaults.scale,
+  glow = MAGNETIC.defaults.glow,
   className,
   onClick,
 }: MagneticButtonProps) {
@@ -55,12 +51,22 @@ export function MagneticButton({
   const glowX = useMotionValue(50);
   const glowY = useMotionValue(50);
   const glowOpacity = useMotionValue(0);
-  const labelX = useTransform(x, (value) => value * LABEL_FOLLOW);
-  const labelY = useTransform(y, (value) => value * LABEL_FOLLOW);
-  const glowBackground = useMotionTemplate`radial-gradient(${GLOW_DIAMETER}px circle at ${glowX}% ${glowY}%, ${GLOW_COLOR}, transparent 65%)`;
+  const labelX = useTransform(x, (value) => value * MAGNETIC.labelFollow);
+  const labelY = useTransform(y, (value) => value * MAGNETIC.labelFollow);
+  const glowBackground = useMotionTemplate`radial-gradient(${MAGNETIC.glow.diameter}px circle at ${glowX}% ${glowY}%, ${MAGNETIC.glow.color}, transparent 65%)`;
 
-  const spring = { type: "spring" as const, stiffness, damping, mass: 1 };
-  const hoverSpring = { type: "spring" as const, stiffness: 300, damping: 20, mass: 1 };
+  const spring = {
+    type: "spring" as const,
+    stiffness,
+    damping,
+    mass: MAGNETIC.mass,
+  };
+  const hoverSpring = {
+    type: "spring" as const,
+    stiffness: MAGNETIC.hoverSpring.stiffness,
+    damping: MAGNETIC.hoverSpring.damping,
+    mass: MAGNETIC.mass,
+  };
 
   const readRect = useCallback(() => {
     const rect = buttonRef.current?.getBoundingClientRect();
@@ -91,7 +97,10 @@ export function MagneticButton({
         return;
       }
 
-      const strength = Math.pow(1 - Math.min(distance / radius, 1), FALLOFF);
+      const strength = Math.pow(
+        1 - Math.min(distance / radius, 1),
+        MAGNETIC.falloff,
+      );
       const safeDistance = distance || 1;
       animate(x, (dx / safeDistance) * strength * pull, spring);
       animate(y, (dy / safeDistance) * strength * pull, spring);
@@ -112,9 +121,9 @@ export function MagneticButton({
 
   const handleButtonEnter = useCallback(
     (event: React.PointerEvent<HTMLButtonElement>) => {
-      if (reduced) return;
+      if (reduced || event.pointerType === "touch") return;
       animate(hoverScale, scale, hoverSpring);
-      if (event.pointerType === "touch" || !glow) return;
+      if (!glow) return;
       animate(glowOpacity, 1, hoverSpring);
     },
     [glow, glowOpacity, hoverScale, hoverSpring, reduced, scale],
@@ -122,10 +131,10 @@ export function MagneticButton({
 
   const handleTouchDown = useCallback(
     (event: React.PointerEvent<HTMLButtonElement>) => {
-      if (event.pointerType !== "touch") return;
-      animate(hoverScale, 0.98, hoverSpring);
+      if (reduced || event.pointerType !== "touch") return;
+      animate(hoverScale, MAGNETIC.touchScale, hoverSpring);
     },
-    [hoverScale, hoverSpring],
+    [hoverScale, hoverSpring, reduced],
   );
 
   const handleTouchUp = useCallback(() => {
@@ -134,7 +143,7 @@ export function MagneticButton({
 
   return (
     <div
-      className="relative grid touch-none place-items-center"
+      className="relative grid place-items-center"
       style={{ width: radius * 2, height: radius * 2 }}
       onPointerEnter={handlePointerEnter}
       onPointerMove={handlePointerMove}
@@ -144,14 +153,25 @@ export function MagneticButton({
         ref={buttonRef}
         type="button"
         onClick={onClick}
-        style={{ x, y, scale: hoverScale }}
+        style={{
+          x,
+          y,
+          scale: hoverScale,
+          height: MAGNETIC.button.height,
+          paddingInline: MAGNETIC.button.paddingX,
+          borderRadius: MAGNETIC.button.radius,
+          background: MAGNETIC.button.bg,
+          color: MAGNETIC.button.fg,
+          fontSize: MAGNETIC.button.fontSize,
+          fontWeight: MAGNETIC.button.fontWeight,
+          letterSpacing: MAGNETIC.button.letterSpacing,
+        }}
         onPointerEnter={handleButtonEnter}
         onPointerDown={handleTouchDown}
         onPointerUp={handleTouchUp}
         onPointerCancel={handleTouchUp}
         className={[
-          "relative flex h-[56px] cursor-pointer items-center justify-center overflow-hidden",
-          "rounded-full bg-[#F2F0E9] px-[32px] text-[16px] font-medium tracking-[-0.01em] text-[#0B0C0E]",
+          "relative flex cursor-pointer touch-manipulation items-center justify-center overflow-hidden",
           "select-none will-change-transform",
           "focus-visible:outline-2 focus-visible:outline-offset-[3px] focus-visible:outline-[#C9F45A]",
           className ?? "",

@@ -29,12 +29,12 @@ export function TopBar({ compact = false }: { compact?: boolean }) {
           </span>
         </Link>
 
-        <nav className="hidden items-center gap-7 text-[13px] text-muted sm:flex">
-          <a href="/#effects" className="animated-underline hover:text-ink">
-            {t.nav.effects}
-          </a>
+        <nav className="hidden items-center gap-8 text-[13.5px] font-medium tracking-[0.01em] text-muted sm:flex">
           <a href="/#method" className="animated-underline hover:text-ink">
             {t.nav.method}
+          </a>
+          <a href="/#effects" className="animated-underline hover:text-ink">
+            {t.nav.effects}
           </a>
         </nav>
 

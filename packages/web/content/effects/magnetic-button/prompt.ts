@@ -11,7 +11,7 @@ import {
   readBool,
   readNumber,
   type Params,
-  type PromptLang,
+  type PromptArgs,
   type Stack,
   type Variant,
 } from "../types";
@@ -30,12 +30,12 @@ type MagneticValues = {
 
 function readValues(params: Params): MagneticValues {
   return {
-    radius: readNumber(params, "radius", 140),
-    pull: readNumber(params, "pull", 16),
-    stiffness: readNumber(params, "stiffness", 260),
-    damping: readNumber(params, "damping", 20),
-    scale: readNumber(params, "scale", 1.03),
-    glow: readBool(params, "glow", true),
+    radius: readNumber(params, "radius", B.defaults.radius),
+    pull: readNumber(params, "pull", B.defaults.pull),
+    stiffness: readNumber(params, "stiffness", B.defaults.stiffness),
+    damping: readNumber(params, "damping", B.defaults.damping),
+    scale: readNumber(params, "scale", B.defaults.scale),
+    glow: readBool(params, "glow", B.defaults.glow),
   };
 }
 
@@ -78,7 +78,7 @@ function behaviorLines(stack: Stack, lang: Locale): string[] {
   const en: string[] = [
     "- Bind Pointer Events on the field wrapper (not mouse events). Read the button's rect on pointerenter and when a pointermove interaction begins — parents can scroll.",
     "- pointerleave: spring back to offset 0 immediately. The button must never stay offset.",
-    '- `event.pointerType === "touch"`: no magnetic pull; press feedback scale 0.98 on pointerdown, back to 1 on pointerup / pointercancel.',
+    `- \`event.pointerType === "touch"\`: no magnetic pull; press feedback scale ${B.touchScale} on pointerdown, back to 1 on pointerup / pointercancel.`,
     "- The wrapper must not swallow clicks: clicking the button still fires its onClick, and the button keeps `type=\"button\"`.",
     "- Keyboard: the button is focusable; focus-visible outline 2px #C9F45A with 3px offset; no movement on focus.",
     "- `prefers-reduced-motion: reduce`: no pull, no scale, no glow animation; keep hover and focus styling.",
@@ -86,7 +86,7 @@ function behaviorLines(stack: Stack, lang: Locale): string[] {
   const zh: string[] = [
     "- 用 Pointer Events 绑定在磁场容器上（不要用 mouse 事件）；在 pointerenter 和每次 pointermove 交互开始时读取按钮 rect——父容器可能滚动。",
     "- pointerleave：立刻用弹簧回到偏移 0，按钮绝不允许停在偏移状态。",
-    '- `event.pointerType === "touch"` 时不吸附；按下缩放 0.98，抬起 / 取消时回 1。',
+    `- \`event.pointerType === "touch"\` 时不吸附；按下缩放 ${B.touchScale}，抬起 / 取消时回 1。`,
     "- 容器不能吞掉点击：点击按钮仍然触发它的 onClick，按钮保留 `type=\"button\"`。",
     "- 键盘：按钮可聚焦；focus-visible 显示 2px #C9F45A、外扩 3px 的描边；聚焦时不产生位移。",
     "- `prefers-reduced-motion: reduce` 时禁用吸附、缩放与光晕动画，但保留 hover / focus 样式。",
@@ -156,7 +156,7 @@ const acceptanceLines = (lang: Locale): string[] => spec.checklist[lang];
 
 function compactRules(stack: Stack, lang: Locale): string[] {
   const en = [
-    "- Pointer Events on the fixed field wrapper; touch gets a 0.98 press only; leaving always returns to 0.",
+    `- Pointer Events on the fixed field wrapper; touch gets a ${B.touchScale} press only; leaving always returns to 0.`,
     "- focus-visible 2px #C9F45A at 3px offset; prefers-reduced-motion disables pull, scale and glow.",
     stack === "vanilla"
       ? "- Zero dependencies; `requestAnimationFrame` + semi-implicit Euler spring; expose `destroy()`."
@@ -168,7 +168,7 @@ function compactRules(stack: Stack, lang: Locale): string[] {
     "- Only transform/opacity; no CSS transition on transform; no extra dependencies; no `any`, no TODOs; do not modify other files.",
   ];
   const zh = [
-    "- 容器上绑 Pointer Events；触屏只做 0.98 按压缩放；离开必定回 0。",
+    `- 容器上绑 Pointer Events；触屏只做 ${B.touchScale} 按压缩放；离开必定回 0。`,
     "- focus-visible 2px #C9F45A、外扩 3px；prefers-reduced-motion 下关闭吸附、缩放与光晕。",
     stack === "vanilla"
       ? "- 零依赖；`requestAnimationFrame` + 半隐式欧拉弹簧；暴露 `destroy()`。"
@@ -187,12 +187,8 @@ export function buildMagneticPrompt({
   stack,
   variant,
   lang,
-}: {
-  params: Params;
-  stack: Stack;
-  variant: Variant;
-  lang: PromptLang;
-}): string {
+  existingSource = "",
+}: PromptArgs): string {
   const p = readValues(params);
   const stackSpec = spec.stacks[stack];
   const context = stackSpec.context[lang];
@@ -233,8 +229,7 @@ export function buildMagneticPrompt({
       acceptance: acceptanceLines(lang),
       output: outputLines(stackSpec.files, "retrofit", 7, lang),
       codeFence,
-      placeholder:
-        lang === "en" ? "PASTE YOUR COMPONENT HERE" : "在这里粘贴你的组件",
+      existingSource,
     });
   }
 

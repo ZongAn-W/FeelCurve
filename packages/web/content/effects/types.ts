@@ -73,18 +73,27 @@ export type EffectSpec = {
   previewParams?: Params;
   /** visual scale applied to the demo inside the home card */
   previewScale?: number;
+  /** fixed layout width for the demo inside the home card (before previewScale) */
+  previewWidth?: number;
   /** extra rows shown in the technical spec card */
   extraRows?: (params: Params, locale: Locale) => SpecRow[];
 };
 
+export type PromptArgs = {
+  params: Params;
+  stack: Stack;
+  variant: Variant;
+  lang: PromptLang;
+  /**
+   * The user's existing component for the retrofit variant. It stays in page
+   * memory: never serialized into the URL, storage or batch exports.
+   */
+  existingSource?: string;
+};
+
 export type EffectModule = {
   spec: EffectSpec;
-  buildPrompt: (args: {
-    params: Params;
-    stack: Stack;
-    variant: Variant;
-    lang: PromptLang;
-  }) => string;
+  buildPrompt: (args: PromptArgs) => string;
   Demo: ComponentType<{ params: Params; locale: Locale }>;
 };
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { MagneticButton } from "@/components/effects/MagneticButton";
+import { MAGNETIC } from "@/content/effects/magnetic-button/constants";
 import {
   readBool,
   readNumber,
@@ -15,7 +16,7 @@ export function MagneticButtonDemo({
   params: Params;
   locale: Locale;
 }) {
-  const radius = readNumber(params, "radius", 140);
+  const radius = readNumber(params, "radius", MAGNETIC.defaults.radius);
 
   return (
     <div
@@ -26,11 +27,15 @@ export function MagneticButtonDemo({
       <div className="pointer-events-none absolute inset-0 rounded-full border border-dashed border-white/[0.08]" />
       <MagneticButton
         radius={radius}
-        pull={readNumber(params, "pull", 16)}
-        stiffness={readNumber(params, "stiffness", 260)}
-        damping={readNumber(params, "damping", 20)}
-        scale={readNumber(params, "scale", 1.03)}
-        glow={readBool(params, "glow", true)}
+        pull={readNumber(params, "pull", MAGNETIC.defaults.pull)}
+        stiffness={readNumber(
+          params,
+          "stiffness",
+          MAGNETIC.defaults.stiffness,
+        )}
+        damping={readNumber(params, "damping", MAGNETIC.defaults.damping)}
+        scale={readNumber(params, "scale", MAGNETIC.defaults.scale)}
+        glow={readBool(params, "glow", MAGNETIC.defaults.glow)}
       >
         {locale === "zh" ? "拿走这个手感" : "Take this feel"}
       </MagneticButton>

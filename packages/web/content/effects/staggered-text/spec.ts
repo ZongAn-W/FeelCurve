@@ -1,4 +1,5 @@
 import type { Locale } from "@/lib/i18n";
+import { STAGGERED } from "./constants";
 import {
   readNumber,
   type EffectSpec,
@@ -6,19 +7,7 @@ import {
   type SpecRow,
 } from "../types";
 
-export const STAGGERED = {
-  text: {
-    fontSize: 40,
-    lineHeight: 1.15,
-    fontWeight: 600,
-    letterSpacing: "-0.03em",
-    color: "#EDEEF0",
-    maxWidth: 640,
-  },
-  easing: "cubic-bezier(0.22, 1, 0.36, 1)",
-  /** CJK is split per character; latin runs stay as words */
-  cjkRule: "CJK 按单字拆分，拉丁文按单词拆分，空格保留为 \\u00A0，换行变成 block 行",
-};
+export { STAGGERED } from "./constants";
 
 export const staggeredTextSpec: EffectSpec = {
   slug: "staggered-text",
@@ -30,8 +19,8 @@ export const staggeredTextSpec: EffectSpec = {
     en: "A line that rises out of blur, unit by unit",
   },
   description: {
-    zh: "把标题按「中文单字 / 英文单词」拆分，每个单元从下方 22px、6px 模糊里浮现，按 45ms 的间隔依次入场。整段文字只占一次布局，动画结束后不留位移。",
-    en: "Splits a heading into units (CJK characters, Latin words), then lifts each one out of a 22px offset and 6px blur, 45ms apart. The paragraph is laid out once — nothing shifts after the animation ends.",
+    zh: `把标题按「中文单字 / 英文单词」拆分，每个单元从下方 ${STAGGERED.defaults.rise}px、${STAGGERED.defaults.blur}px 模糊里浮现，按 ${STAGGERED.defaults.stagger}ms 的间隔依次入场。整段文字只占一次布局，动画结束后不留位移。`,
+    en: `Splits a heading into units (CJK characters, Latin words), then lifts each one out of a ${STAGGERED.defaults.rise}px offset and ${STAGGERED.defaults.blur}px blur, ${STAGGERED.defaults.stagger}ms apart. The paragraph is laid out once — nothing shifts after the animation ends.`,
   },
   tags: ["text", "stagger", "blur", "entrance"],
   params: [
@@ -43,7 +32,7 @@ export const staggeredTextSpec: EffectSpec = {
       min: 10,
       max: 180,
       step: 5,
-      default: 45,
+      default: STAGGERED.defaults.stagger,
     },
     {
       kind: "number",
@@ -53,7 +42,7 @@ export const staggeredTextSpec: EffectSpec = {
       min: 200,
       max: 1200,
       step: 20,
-      default: 520,
+      default: STAGGERED.defaults.duration,
     },
     {
       kind: "number",
@@ -63,7 +52,7 @@ export const staggeredTextSpec: EffectSpec = {
       min: 0,
       max: 60,
       step: 2,
-      default: 22,
+      default: STAGGERED.defaults.rise,
     },
     {
       kind: "number",
@@ -73,7 +62,7 @@ export const staggeredTextSpec: EffectSpec = {
       min: 0,
       max: 16,
       step: 1,
-      default: 6,
+      default: STAGGERED.defaults.blur,
     },
   ],
   stacks: {

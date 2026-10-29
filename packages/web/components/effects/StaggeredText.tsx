@@ -1,8 +1,8 @@
 "use client";
 
 import { motion } from "motion/react";
-
-const EASE = [0.22, 1, 0.36, 1] as const;
+import type { CSSProperties } from "react";
+import { STAGGERED } from "@/content/effects/staggered-text/constants";
 
 const CJK =
   /[\u3000-\u303f\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff00-\uffef]/;
@@ -22,6 +22,7 @@ export type StaggeredTextProps = {
   /** initial blur, in px */
   blur?: number;
   className?: string;
+  style?: CSSProperties;
 };
 
 function splitUnits(line: string): string[] {
@@ -50,18 +51,24 @@ function splitUnits(line: string): string[] {
 
 export function StaggeredText({
   text,
-  stagger = 45,
-  duration = 520,
-  rise = 22,
-  blur = 6,
+  stagger = STAGGERED.defaults.stagger,
+  duration = STAGGERED.defaults.duration,
+  rise = STAGGERED.defaults.rise,
+  blur = STAGGERED.defaults.blur,
   className,
+  style,
 }: StaggeredTextProps) {
   const lines = text.split("\n").map(splitUnits);
   const label = text.replace(/\n/g, " ");
 
   let cursor = 0;
   return (
-    <p data-demo="staggered-text" className={className} aria-label={label}>
+    <p
+      data-demo="staggered-text"
+      className={className}
+      style={style}
+      aria-label={label}
+    >
       <style>{REDUCED_MOTION_CSS}</style>
       {lines.map((line, lineIndex) => {
         const start = cursor;
@@ -77,7 +84,7 @@ export function StaggeredText({
                 transition={{
                   duration: duration / 1000,
                   delay: ((start + unitIndex) * stagger) / 1000,
-                  ease: EASE,
+                  ease: STAGGERED.easingPoints,
                 }}
               >
                 {unit}

@@ -16,10 +16,13 @@
 
 .title {
   color: var(--hero-foreground);
+  font-family: var(--font-feelcurve-display), var(--font-sans);
   font-size: clamp(54px, 6.1vw, 82px);
   font-weight: 500;
+  font-optical-sizing: auto;
   letter-spacing: -0.035em;
   line-height: 1.24;
+  text-wrap: balance;
 }
 
 .title > span {

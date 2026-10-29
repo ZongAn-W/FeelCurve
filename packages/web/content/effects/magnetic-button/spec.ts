@@ -1,4 +1,5 @@
 import type { Locale } from "@/lib/i18n";
+import { MAGNETIC } from "./constants";
 import {
   formatNumber,
   readBool,
@@ -8,24 +9,7 @@ import {
   type SpecRow,
 } from "../types";
 
-/** every number the prompt and the demo share */
-export const MAGNETIC = {
-  labelFollow: 0.35,
-  mass: 1,
-  falloff: 1.6,
-  hoverSpring: { stiffness: 300, damping: 20 },
-  glow: { diameter: 220, color: "rgba(201, 244, 90, 0.34)" },
-  button: {
-    height: 56,
-    paddingX: 32,
-    radius: 999,
-    bg: "#F2F0E9",
-    fg: "#0B0C0E",
-    fontSize: 16,
-    fontWeight: 500,
-    letterSpacing: "-0.01em",
-  },
-};
+export { MAGNETIC } from "./constants";
 
 export const magneticButtonSpec: EffectSpec = {
   slug: "magnetic-button",
@@ -37,8 +21,8 @@ export const magneticButtonSpec: EffectSpec = {
     en: "The button leans toward your cursor",
   },
   description: {
-    zh: "在按钮周围建立一个看不见的磁场：指针进入范围内，按钮被朝指针方向拉动，离开后由弹簧带回原位；按钮内文字以 35% 的比例跟随，形成轻微视差。",
-    en: "An invisible field around the button: inside its radius the button is pulled toward the pointer, and a spring carries it back when the pointer leaves. The label follows at 35% for a subtle parallax.",
+    zh: `在按钮周围建立一个看不见的磁场：指针进入范围内，按钮被朝指针方向拉动，离开后由弹簧带回原位；按钮内文字以 ${MAGNETIC.labelFollow * 100}% 的比例跟随，形成轻微视差。`,
+    en: `An invisible field around the button: inside its radius the button is pulled toward the pointer, and a spring carries it back when the pointer leaves. The label follows at ${MAGNETIC.labelFollow * 100}% for a subtle parallax.`,
   },
   tags: ["pointer", "hover", "spring", "button"],
   params: [
@@ -50,7 +34,7 @@ export const magneticButtonSpec: EffectSpec = {
       min: 80,
       max: 220,
       step: 5,
-      default: 140,
+      default: MAGNETIC.defaults.radius,
     },
     {
       kind: "number",
@@ -60,7 +44,7 @@ export const magneticButtonSpec: EffectSpec = {
       min: 0,
       max: 36,
       step: 1,
-      default: 16,
+      default: MAGNETIC.defaults.pull,
     },
     {
       kind: "number",
@@ -70,7 +54,7 @@ export const magneticButtonSpec: EffectSpec = {
       min: 60,
       max: 600,
       step: 10,
-      default: 260,
+      default: MAGNETIC.defaults.stiffness,
     },
     {
       kind: "number",
@@ -80,7 +64,7 @@ export const magneticButtonSpec: EffectSpec = {
       min: 6,
       max: 40,
       step: 1,
-      default: 20,
+      default: MAGNETIC.defaults.damping,
     },
     {
       kind: "number",
@@ -90,13 +74,13 @@ export const magneticButtonSpec: EffectSpec = {
       min: 1,
       max: 1.1,
       step: 0.005,
-      default: 1.03,
+      default: MAGNETIC.defaults.scale,
     },
     {
       kind: "boolean",
       key: "glow",
       label: { zh: "指针光晕", en: "Pointer glow" },
-      default: true,
+      default: MAGNETIC.defaults.glow,
     },
   ],
   stacks: {

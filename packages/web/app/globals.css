@@ -12,10 +12,11 @@
   --color-accent: #c9f45a;
   --color-accent-dim: #8fae3f;
 
-  --font-sans: "Inter", "Segoe UI Variable", "Segoe UI", "PingFang SC",
-    "Hiragino Sans GB", "Microsoft YaHei", system-ui, sans-serif;
-  --font-mono: "JetBrains Mono", "SFMono-Regular", "Cascadia Code", ui-monospace,
-    Consolas, monospace;
+  --font-sans: "Inter", "SF Pro Text", -apple-system, BlinkMacSystemFont,
+    "Segoe UI Variable", "Segoe UI", "PingFang SC", "Hiragino Sans GB",
+    "Noto Sans SC", "Microsoft YaHei", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", "SFMono-Regular", Menlo, "Cascadia Code",
+    ui-monospace, Consolas, monospace;
 }
 
 :root {
@@ -30,6 +31,8 @@
 html {
   scroll-behavior: smooth;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-text-size-adjust: 100%;
   text-rendering: optimizeLegibility;
 }
 
@@ -38,6 +41,8 @@ body {
   color: var(--color-ink);
   font-family: var(--font-sans);
   font-feature-settings: "ss01" on, "cv11" on;
+  font-kerning: normal;
+  font-optical-sizing: auto;
   overflow-x: hidden;
 }
 
@@ -98,9 +103,11 @@ body {
 /* --- type ----------------------------------------------------------- */
 
 .display {
+  font-family: var(--font-feelcurve-display), var(--font-sans);
   letter-spacing: -0.045em;
   line-height: 0.95;
-  font-weight: 600;
+  font-weight: 500;
+  font-optical-sizing: auto;
   text-wrap: balance;
 }
 
@@ -110,6 +117,21 @@ body {
   letter-spacing: 0.18em;
   text-transform: uppercase;
   color: var(--color-faint);
+}
+
+/* Touch devices see the touch copy; hover devices see the pointer copy. */
+.touch-only {
+  display: none;
+}
+
+@media (hover: none) {
+  .touch-only {
+    display: inline;
+  }
+
+  .pointer-only {
+    display: none;
+  }
 }
 
 /* --- controls ------------------------------------------------------- */
