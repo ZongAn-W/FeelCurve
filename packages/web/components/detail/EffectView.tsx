@@ -13,8 +13,17 @@ import {
   normalizeParams,
   paramDisplay,
   type Params,
+  type PromptLang,
   type SpecRow,
+  type Stack,
+  type Variant,
 } from "@/content/effects/types";
+import { writeTextToClipboard } from "@/lib/clipboard";
+import {
+  buildEffectPath,
+  buildEffectUrl,
+  readEffectPageState,
+} from "@/lib/effect-url";
 
 const CATEGORY_LABELS: Record<string, { zh: string; en: string }> = {
   pointer: { zh: "指针交互", en: "MICRO-INTERACTION" },
@@ -35,65 +44,115 @@ export function EffectView({ slug, sourceCode }: EffectViewProps) {
   const { spec, Demo } = module;
   const { locale, t } = useLocale();
   const [params, setParams] = useState<Params>(() => defaultParams(spec));
-  const [shared, setShared] = useState(false);
+  const [stack, setStack] = useState<Stack>("react");
+  const [variant, setVariant] = useState<Variant>("full");
+  const [promptLang, setPromptLang] = useState<PromptLang>(locale);
+  const [ready, setReady] = useState(false);
+  const [shareStatus, setShareStatus] = useState<
+    "idle" | "shared" | "failed"
+  >("idle");
   const restoredRef = useRef(false);
+  const interactedRef = useRef(false);
+  const explicitPromptLangRef = useRef(false);
 
   useEffect(() => {
     // StrictMode mounts effects twice in development; restore from the URL once.
     if (restoredRef.current) return;
     restoredRef.current = true;
-    const search = new URLSearchParams(window.location.search);
-    const raw: Params = { ...defaultParams(spec) };
-    for (const param of spec.params) {
-      const value = search.get(param.key);
-      if (value === null) continue;
-      if (param.kind === "boolean") {
-        raw[param.key] = value === "1" || value === "true";
-      } else {
-        const parsed = Number(value);
-        if (Number.isFinite(parsed)) raw[param.key] = parsed;
-      }
-    }
-    setParams(normalizeParams(spec, raw));
-  }, [spec]);
-
-  useEffect(() => {
-    const query = new URLSearchParams();
-    for (const param of spec.params) {
-      const value = params[param.key];
-      query.set(
-        param.key,
-        param.kind === "boolean" ? (value ? "1" : "0") : String(value),
-      );
-    }
-    window.history.replaceState(
-      null,
-      "",
-      `${window.location.pathname}?${query.toString()}`,
+    const { state, explicitPromptLang } = readEffectPageState(
+      window.location.search,
+      spec,
+      locale,
     );
-  }, [params, spec]);
+    setParams(state.params);
+    setStack(state.stack);
+    setVariant(state.variant);
+    setPromptLang(state.promptLang);
+    explicitPromptLangRef.current = explicitPromptLang;
+    setReady(true);
+  }, [spec, locale]);
+
+  // Prompt language follows the UI language until the user (or a shared link)
+  // explicitly chooses one.
+  useEffect(() => {
+    if (!ready || explicitPromptLangRef.current) return;
+    setPromptLang(locale);
+  }, [locale, ready]);
+
+  // Never write defaults over a shared URL before restoration has finished.
+  // We also wait for a real interaction, so opening a clean URL leaves it clean.
+  useEffect(() => {
+    if (!ready || !interactedRef.current) return;
+    const next = buildEffectPath(window.location.href, spec, {
+      params,
+      stack,
+      variant,
+      promptLang,
+    });
+    const current = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+    if (next !== current) window.history.replaceState(null, "", next);
+  }, [params, promptLang, ready, spec, stack, variant]);
 
   useEffect(() => {
-    if (!shared) return;
-    const timer = window.setTimeout(() => setShared(false), 2200);
+    setShareStatus("idle");
+  }, [params, promptLang, stack, variant]);
+
+  useEffect(() => {
+    if (shareStatus === "idle") return;
+    const timer = window.setTimeout(
+      () => setShareStatus("idle"),
+      shareStatus === "shared" ? 2200 : 4200,
+    );
     return () => window.clearTimeout(timer);
-  }, [shared]);
+  }, [shareStatus]);
 
   const updateParams = useCallback(
     (patch: Params) => {
+      interactedRef.current = true;
       setParams((prev) => normalizeParams(spec, { ...prev, ...patch }));
     },
     [spec],
   );
 
-  const handleShare = useCallback(async () => {
-    try {
-      await navigator.clipboard.writeText(window.location.href);
-    } catch {
-      /* the URL is already in the address bar */
-    }
-    setShared(true);
+  const handleReset = useCallback(() => {
+    interactedRef.current = true;
+    setParams(defaultParams(spec));
+  }, [spec]);
+
+  const handleStackChange = useCallback((next: Stack) => {
+    interactedRef.current = true;
+    setStack(next);
   }, []);
+
+  const handleVariantChange = useCallback((next: Variant) => {
+    interactedRef.current = true;
+    setVariant(next);
+  }, []);
+
+  const handlePromptLangChange = useCallback((next: PromptLang) => {
+    interactedRef.current = true;
+    explicitPromptLangRef.current = true;
+    setPromptLang(next);
+  }, []);
+
+  const handleShare = useCallback(async () => {
+    interactedRef.current = true;
+    const shareUrl = buildEffectUrl(window.location.href, spec, {
+      params,
+      stack,
+      variant,
+      promptLang,
+    });
+    const localUrl = buildEffectPath(window.location.href, spec, {
+      params,
+      stack,
+      variant,
+      promptLang,
+    });
+    window.history.replaceState(null, "", localUrl);
+    const ok = await writeTextToClipboard(shareUrl);
+    setShareStatus(ok ? "shared" : "failed");
+  }, [params, promptLang, spec, stack, variant]);
 
   const specRows: SpecRow[] = useMemo(() => {
     const paramRows: SpecRow[] = spec.params.map((param) => ({
@@ -185,14 +244,35 @@ export function EffectView({ slug, sourceCode }: EffectViewProps) {
                   <span className="hidden rounded-full border border-line px-2 py-0.5 text-[10.5px] motion-reduce:inline-block">
                     {t.detail.reduced}
                   </span>
-                  {t.detail.stageHints[spec.category]}
+                  {spec.category === "pointer" ? (
+                    <>
+                      <span className="pointer-only">
+                        {t.detail.stageHints[spec.category]}
+                      </span>
+                      <span className="touch-only">
+                        {t.detail.stageHintTouch}
+                      </span>
+                    </>
+                  ) : (
+                    t.detail.stageHints[spec.category]
+                  )}
                 </span>
               </div>
             </section>
           </div>
 
           <div className="min-w-0 lg:sticky lg:top-[4.5rem] lg:col-start-2 lg:row-span-2 lg:row-start-1">
-            <PromptPanel module={module} params={params} sourceCode={sourceCode} />
+            <PromptPanel
+              module={module}
+              params={params}
+              demoSourceCode={sourceCode}
+              stack={stack}
+              variant={variant}
+              promptLang={promptLang}
+              onStackChange={handleStackChange}
+              onVariantChange={handleVariantChange}
+              onPromptLangChange={handlePromptLangChange}
+            />
           </div>
 
           <div className="grid min-w-0 gap-4 lg:col-start-1 lg:row-start-2">
@@ -200,9 +280,9 @@ export function EffectView({ slug, sourceCode }: EffectViewProps) {
               spec={spec}
               params={params}
               onChange={updateParams}
-              onReset={() => setParams(defaultParams(spec))}
+              onReset={handleReset}
               onShare={handleShare}
-              shared={shared}
+              shareStatus={shareStatus}
             />
 
             <section className="panel p-5 sm:p-6">

@@ -1,54 +1,47 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { writeTextToClipboard } from "@/lib/clipboard";
+
+type CopyState = "idle" | "copied" | "failed";
 
 type CopyButtonProps = {
   text: string;
   label: string;
   copiedLabel: string;
+  failedLabel: string;
   variant?: "primary" | "ghost";
   className?: string;
 };
-
-async function writeClipboard(text: string) {
-  try {
-    await navigator.clipboard.writeText(text);
-    return true;
-  } catch {
-    try {
-      const area = document.createElement("textarea");
-      area.value = text;
-      area.style.position = "fixed";
-      area.style.opacity = "0";
-      document.body.appendChild(area);
-      area.select();
-      const ok = document.execCommand("copy");
-      document.body.removeChild(area);
-      return ok;
-    } catch {
-      return false;
-    }
-  }
-}
 
 export function CopyButton({
   text,
   label,
   copiedLabel,
+  failedLabel,
   variant = "primary",
   className = "",
 }: CopyButtonProps) {
-  const [copied, setCopied] = useState(false);
+  const [status, setStatus] = useState<CopyState>("idle");
+
+  // Any content change invalidates an old "copied" badge immediately.
+  useEffect(() => {
+    setStatus("idle");
+  }, [text]);
 
   useEffect(() => {
-    if (!copied) return;
-    const timer = window.setTimeout(() => setCopied(false), 2400);
+    if (status === "idle") return;
+    const timer = window.setTimeout(
+      () => setStatus("idle"),
+      status === "copied" ? 2400 : 4200,
+    );
     return () => window.clearTimeout(timer);
-  }, [copied]);
+  }, [status]);
 
   const handleCopy = useCallback(async () => {
-    const ok = await writeClipboard(text);
-    if (ok) setCopied(true);
+    setStatus("idle");
+    const ok = await writeTextToClipboard(text);
+    setStatus(ok ? "copied" : "failed");
   }, [text]);
 
   const base =
@@ -57,15 +50,24 @@ export function CopyButton({
     variant === "primary"
       ? "bg-accent text-[#0A0B08] hover:bg-[#d8ff79]"
       : "hairline bg-white/[0.02] text-ink hover:bg-white/[0.06]";
+  const failedSkin = status === "failed" ? " ring-1 ring-[#f87171]/70" : "";
 
   return (
     <button
       type="button"
       onClick={handleCopy}
-      className={`${base} ${skin} ${className}`}
+      className={`${base} ${skin}${failedSkin} ${className}`}
       aria-live="polite"
+      data-copy-status={status}
+      title={
+        status === "failed"
+          ? failedLabel
+          : status === "copied"
+            ? copiedLabel
+            : label
+      }
     >
-      {copied ? (
+      {status === "copied" ? (
         <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden>
           <path
             d="M3 8.5 6.2 11.7 13 4.9"
@@ -73,6 +75,22 @@ export function CopyButton({
             strokeWidth="1.7"
             strokeLinecap="round"
             strokeLinejoin="round"
+          />
+        </svg>
+      ) : status === "failed" ? (
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden>
+          <path
+            d="M8 4.4v4.2M8 11.4v.1"
+            stroke="currentColor"
+            strokeWidth="1.7"
+            strokeLinecap="round"
+          />
+          <circle
+            cx="8"
+            cy="8"
+            r="5.8"
+            stroke="currentColor"
+            strokeWidth="1.3"
           />
         </svg>
       ) : (
@@ -94,7 +112,13 @@ export function CopyButton({
           />
         </svg>
       )}
-      <span>{copied ? copiedLabel : label}</span>
+      <span>
+        {status === "copied"
+          ? copiedLabel
+          : status === "failed"
+            ? failedLabel
+            : label}
+      </span>
     </button>
   );
 }

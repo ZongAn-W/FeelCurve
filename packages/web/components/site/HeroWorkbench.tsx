@@ -146,6 +146,7 @@ export function HeroWorkbench() {
             text={prompt}
             label={locale === "zh" ? "复制完整提示词" : "Copy full prompt"}
             copiedLabel={t.detail.copied}
+            failedLabel={t.toast.failed}
             variant="ghost"
             className={styles.copyButton}
           />

@@ -34,28 +34,28 @@ export function outputLines(
   if (lang === "en") {
     const lines = [
       multi
-        ? "- Reply with both complete files, each in its own code block, prefixed with its path."
-        : "- Reply with the complete file content in one code block — no diffs, no ellipses, no explanation before or after.",
+        ? "- Reply with both complete files, each in its own code block, prefixed with its path. Do not explain the design before the code blocks."
+        : "- Reply with the complete file content in one code block — no diffs, no ellipses, no explanation before the code block.",
       "- If a required dependency is missing, stop and ask before installing anything.",
     ];
     lines.push(
       variant === "retrofit"
         ? "- After the code block, add a short `changed:` list (max 5 bullets) of what you modified and why."
-        : `- End with one line: \`self-check: ${checks}\` — use ✗ plus a short reason for anything that fails.`,
+        : `- After the code block, end with one line: \`self-check: ${checks}\` — use ✗ plus a short reason for anything that fails.`,
     );
     return lines;
   }
 
   const lines = [
     multi
-      ? "- 输出两个完整文件，各自一个代码块，并在代码块前标注文件路径。"
-      : "- 用一个代码块输出完整文件内容，不要 diff、不要省略号、代码块前后不要解释。",
+      ? "- 输出两个完整文件，各自一个代码块，并在代码块前标注文件路径；代码块之前不要解释设计。"
+      : "- 用一个代码块输出完整文件内容，不要 diff、不要省略号，代码块之前不要解释。",
     "- 如果缺少必要依赖，先停下来问我，不要擅自安装。",
   ];
   lines.push(
     variant === "retrofit"
       ? "- 代码块之后追加一段 `changed:` 列表（最多 5 条），说明改了什么、为什么。"
-      : `- 最后输出一行：\`self-check: ${checks}\`，未通过的项用 ✗ 并附一句原因。`,
+      : `- 代码块之后最后输出一行：\`self-check: ${checks}\`，未通过的项用 ✗ 并附一句原因。`,
   );
   return lines;
 }
@@ -134,11 +134,27 @@ export type RetrofitSections = {
   acceptance: string[];
   output: string[];
   codeFence: string;
-  placeholder: string;
+  /** the actual component source the user pasted, if any */
+  existingSource: string;
 };
+
+/** pick a fence longer than any backtick run inside the pasted source */
+export function fenceFor(source: string): string {
+  const longest = (source.match(/`+/g) ?? []).reduce(
+    (max, run) => Math.max(max, run.length),
+    0,
+  );
+  return "`".repeat(Math.max(3, longest + 1));
+}
 
 export function assembleRetrofit(sections: RetrofitSections): string {
   const en = sections.lang === "en";
+  const hasSource = sections.existingSource.trim().length > 0;
+  const fence = fenceFor(sections.existingSource);
+  const sourceBody = sections.existingSource.endsWith("\n")
+    ? sections.existingSource
+    : `${sections.existingSource}\n`;
+
   const parts: string[] = [
     heading(en ? "ROLE" : "角色"),
     en
@@ -146,21 +162,37 @@ export function assembleRetrofit(sections: RetrofitSections): string {
       : `你会改造一个已有组件，项目使用 ${sections.context}。不要重写这个组件——只把动效加进去，其余保持不变。`,
     "",
     heading(en ? "MY EXISTING COMPONENT" : "我的现有组件"),
-    en
-      ? "Preserve its public props, markup structure and visual design. If the block below is empty, ask me for the component before writing code."
-      : "保留它的对外 props、结构（markup）与视觉。如果下面的代码块是空的，先向我要组件再动手。",
+    hasSource
+      ? en
+        ? "The code below is the real component I pasted. Preserve its public props, markup structure and visual design."
+        : "下面的代码块是我实际粘贴的现有组件。保留它的对外 props、结构（markup）与视觉。"
+      : en
+        ? "No component source was provided. Ask me to paste the full component before writing any code. Do not treat placeholder text as source, and do not guess the component."
+        : "我没有提供现有组件源码。先向我索取完整组件，再动手写代码；不要把任何占位文字当成源码，也不要猜测组件内容。",
     "",
-    "```" + sections.codeFence,
-    sections.placeholder,
-    "```",
-    "",
+  ];
+
+  if (hasSource) {
+    parts.push(
+      `${fence}${sections.codeFence}`,
+      sourceBody.replace(/\n$/, ""),
+      fence,
+      "",
+    );
+  }
+
+  parts.push(
     heading(en ? "CHANGE" : "改动"),
     sections.task,
     "",
     heading(en ? "FILE CONTRACT" : "文件契约"),
-    en
-      ? "- Modify only the file I pasted. Keep its export name, props API and styles."
-      : "- 只修改我粘贴的这个文件，保留导出名、props API 与样式。",
+    hasSource
+      ? en
+        ? "- Modify only the file I pasted. Keep its export name, props API and styles."
+        : "- 只修改我粘贴的这个文件，保留导出名、props API 与样式。"
+      : en
+        ? "- Wait until I paste the component, then modify only that file and keep its export name, props API and styles."
+        : "- 等我粘贴组件后，只修改那个文件，并保留它的导出名、props API 与样式。",
     en
       ? "- Add at most one optional boolean prop (default `true`) to gate the effect; keep every other prop unchanged."
       : "- 最多新增一个可选的布尔 prop（默认 `true`）用来开关这个效果，其余 API 不变。",
@@ -189,8 +221,15 @@ export function assembleRetrofit(sections: RetrofitSections): string {
     ...numbered(sections.acceptance),
     "",
     heading(en ? "OUTPUT" : "输出"),
-    ...sections.output,
-  ];
+    ...(hasSource
+      ? sections.output
+      : [
+          en
+            ? "- No component was pasted. Ask me for it and stop: do not output code, diffs or placeholder files in this turn."
+            : "- 我没有粘贴组件。先向我索取组件并停止：这一轮不要输出代码、diff 或占位文件。",
+        ]),
+  );
+
   return parts.join("\n");
 }
 

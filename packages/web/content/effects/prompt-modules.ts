@@ -1,25 +1,16 @@
+import { buildLiquidGlassPrompt } from "./liquid-glass-button/prompt";
+import { liquidGlassButtonSpec } from "./liquid-glass-button/spec";
 import { buildMagneticPrompt } from "./magnetic-button/prompt";
 import { magneticButtonSpec } from "./magnetic-button/spec";
 import { buildSpotlightPrompt } from "./spotlight-card/prompt";
 import { spotlightCardSpec } from "./spotlight-card/spec";
 import { buildStaggeredPrompt } from "./staggered-text/prompt";
 import { staggeredTextSpec } from "./staggered-text/spec";
-import type {
-  EffectSpec,
-  Params,
-  PromptLang,
-  Stack,
-  Variant,
-} from "./types";
+import type { EffectSpec, PromptArgs } from "./types";
 
 export type PromptModule = {
   spec: EffectSpec;
-  buildPrompt: (args: {
-    params: Params;
-    stack: Stack;
-    variant: Variant;
-    lang: PromptLang;
-  }) => string;
+  buildPrompt: (args: PromptArgs) => string;
 };
 
 /**
@@ -31,4 +22,5 @@ export const promptModules: PromptModule[] = [
   { spec: magneticButtonSpec, buildPrompt: buildMagneticPrompt },
   { spec: spotlightCardSpec, buildPrompt: buildSpotlightPrompt },
   { spec: staggeredTextSpec, buildPrompt: buildStaggeredPrompt },
+  { spec: liquidGlassButtonSpec, buildPrompt: buildLiquidGlassPrompt },
 ];

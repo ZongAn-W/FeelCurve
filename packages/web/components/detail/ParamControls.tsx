@@ -12,13 +12,15 @@ import {
 } from "@/content/effects/types";
 import { SpringCurve } from "./SpringCurve";
 
+type ShareStatus = "idle" | "shared" | "failed";
+
 type ParamControlsProps = {
   spec: EffectSpec;
   params: Params;
   onChange: (patch: Params) => void;
   onReset: () => void;
   onShare: () => void;
-  shared: boolean;
+  shareStatus: ShareStatus;
 };
 
 export function ParamControls({
@@ -27,7 +29,7 @@ export function ParamControls({
   onChange,
   onReset,
   onShare,
-  shared,
+  shareStatus,
 }: ParamControlsProps) {
   const { locale, t } = useLocale();
 
@@ -54,7 +56,10 @@ export function ParamControls({
           <button
             type="button"
             onClick={onShare}
-            className="hairline inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[11.5px] text-muted transition-colors hover:bg-white/[0.05] hover:text-ink"
+            aria-live="polite"
+            className={`hairline inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[11.5px] text-muted transition-colors hover:bg-white/[0.05] hover:text-ink ${
+              shareStatus === "failed" ? "ring-1 ring-[#f87171]/70" : ""
+            }`}
           >
             <svg width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden>
               <path
@@ -70,7 +75,11 @@ export function ParamControls({
                 strokeLinecap="round"
               />
             </svg>
-            {shared ? t.detail.shared : t.detail.share}
+            {shareStatus === "shared"
+              ? t.detail.shared
+              : shareStatus === "failed"
+                ? t.toast.failed
+                : t.detail.share}
           </button>
           <button
             type="button"

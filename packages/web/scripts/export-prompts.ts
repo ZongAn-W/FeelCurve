@@ -27,17 +27,23 @@ type ExportRecord = {
 };
 
 /**
- * Writes every effect × stack × variant × language prompt to
- * `exports/<slug>/<stack>.<variant>.<lang>.md` plus `exports/index.json`.
+ * Writes every effect × stack × variant × language prompt to a fresh
+ * `exports/<run>/<slug>/<stack>.<variant>.<lang>.md` directory plus
+ * `<run>/index.json`.
+ *
+ * Non-destructive by design: each run gets its own directory and no existing
+ * files are deleted. Set `PROMPT_EXPORT_DIR` to pick the run directory name.
  *
  * The markdown file contains the prompt only, so you can open it and copy
  * the whole file into Cursor / Claude Code without editing.
  */
 async function main() {
   const root = process.cwd();
-  const outDir = path.join(root, "exports");
+  const runId =
+    process.env.PROMPT_EXPORT_DIR ??
+    new Date().toISOString().replace(/[:.]/g, "-");
+  const outDir = path.join(root, "exports", runId);
 
-  await fs.rm(outDir, { recursive: true, force: true });
   await fs.mkdir(outDir, { recursive: true });
 
   const records: ExportRecord[] = [];
@@ -59,7 +65,7 @@ async function main() {
             stack,
             variant,
             lang,
-            file: path.posix.join("exports", spec.slug, file),
+            file: path.posix.join("exports", runId, spec.slug, file),
             chars: prompt.length,
             tokens: Math.round(prompt.length / 3.6),
             params,
@@ -87,9 +93,9 @@ async function main() {
     .join(" · ");
 
   console.log(`exported ${records.length} prompts (${perEffect})`);
-  console.log(`index: exports/index.json`);
+  console.log(`index: ${path.posix.join("exports", runId, "index.json")}`);
   console.log(
-    "next: run each file in Cursor / Claude Code, then flip its status in exports/index.json",
+    "next: run each file in Cursor / Claude Code, then flip its status in the run's index.json",
   );
 }
 

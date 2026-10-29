@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { StaggeredText } from "@/components/effects/StaggeredText";
+import { STAGGERED } from "@/content/effects/staggered-text/constants";
 import { readNumber, type Params } from "@/content/effects/types";
 import type { Locale } from "@/lib/i18n";
 
@@ -13,10 +14,14 @@ export function StaggeredTextDemo({
   locale: Locale;
 }) {
   const [replay, setReplay] = useState(0);
-  const stagger = readNumber(params, "stagger", 45);
-  const duration = readNumber(params, "duration", 520);
-  const rise = readNumber(params, "rise", 22);
-  const blur = readNumber(params, "blur", 6);
+  const stagger = readNumber(params, "stagger", STAGGERED.defaults.stagger);
+  const duration = readNumber(
+    params,
+    "duration",
+    STAGGERED.defaults.duration,
+  );
+  const rise = readNumber(params, "rise", STAGGERED.defaults.rise);
+  const blur = readNumber(params, "blur", STAGGERED.defaults.blur);
   const text =
     locale === "zh"
       ? "把喜欢的手感\n复制成提示词"
@@ -31,7 +36,14 @@ export function StaggeredTextDemo({
         duration={duration}
         rise={rise}
         blur={blur}
-        className="max-w-[640px] text-[40px] font-semibold leading-[1.15] tracking-[-0.03em] text-ink"
+        className="max-w-[640px] text-ink"
+        style={{
+          fontSize: STAGGERED.text.fontSize,
+          lineHeight: STAGGERED.text.lineHeight,
+          fontWeight: STAGGERED.text.fontWeight,
+          letterSpacing: STAGGERED.text.letterSpacing,
+          color: STAGGERED.text.color,
+        }}
       />
       <button
         type="button"

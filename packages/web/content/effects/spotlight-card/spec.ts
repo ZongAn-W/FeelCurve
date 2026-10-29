@@ -1,4 +1,5 @@
 import type { Locale } from "@/lib/i18n";
+import { SPOTLIGHT } from "./constants";
 import {
   readBool,
   readNumber,
@@ -7,22 +8,7 @@ import {
   type SpecRow,
 } from "../types";
 
-export const SPOTLIGHT = {
-  card: {
-    height: 260,
-    maxWidth: 400,
-    radius: 20,
-    bg: "#0C0E11",
-    fg: "#EDEEF0",
-    muted: "#9A9CA1",
-    border: "rgba(255, 255, 255, 0.08)",
-    padding: 28,
-    perspective: 900,
-  },
-  spotlightColor: "rgba(201, 244, 90, var(--intensity))",
-  borderGlow: "rgba(201, 244, 90, 0.65)",
-  spring: { stiffness: 200, damping: 24 },
-};
+export { SPOTLIGHT } from "./constants";
 
 export const spotlightCardSpec: EffectSpec = {
   slug: "spotlight-card",
@@ -47,7 +33,7 @@ export const spotlightCardSpec: EffectSpec = {
       min: 80,
       max: 360,
       step: 10,
-      default: 220,
+      default: SPOTLIGHT.defaults.size,
     },
     {
       kind: "number",
@@ -57,7 +43,7 @@ export const spotlightCardSpec: EffectSpec = {
       min: 0.05,
       max: 0.6,
       step: 0.01,
-      default: 0.22,
+      default: SPOTLIGHT.defaults.intensity,
     },
     {
       kind: "number",
@@ -67,7 +53,7 @@ export const spotlightCardSpec: EffectSpec = {
       min: 0,
       max: 12,
       step: 0.5,
-      default: 6,
+      default: SPOTLIGHT.defaults.tilt,
     },
     {
       kind: "number",
@@ -77,13 +63,13 @@ export const spotlightCardSpec: EffectSpec = {
       min: 1,
       max: 1.08,
       step: 0.01,
-      default: 1.02,
+      default: SPOTLIGHT.defaults.scale,
     },
     {
       kind: "boolean",
       key: "borderHighlight",
       label: { zh: "边框高光", en: "Border highlight" },
-      default: true,
+      default: SPOTLIGHT.defaults.borderHighlight,
     },
   ],
   stacks: {

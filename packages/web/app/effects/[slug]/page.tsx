@@ -1,9 +1,8 @@
-import fs from "node:fs/promises";
-import path from "node:path";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { EffectView } from "@/components/detail/EffectView";
 import { effectModules, getEffectModule } from "@/content/effects/registry";
+import { readEffectSource } from "@/lib/effect-source";
 
 export function generateStaticParams() {
   return effectModules.map((module) => ({ slug: module.spec.slug }));
@@ -32,15 +31,9 @@ export default async function EffectPage({
   const module = getEffectModule(slug);
   if (!module) notFound();
 
-  const sourceCode = await fs.readFile(
-    path.join(
-      process.cwd(),
-      "components",
-      "effects",
-      path.basename(module.spec.sourcePath),
-    ),
-    "utf8",
-  );
+  // Read the exact package-relative path declared by the spec. The helper
+  // rejects absolute paths and any path escaping `components/`.
+  const sourceCode = await readEffectSource(module.spec.sourcePath);
 
   return <EffectView slug={slug} sourceCode={sourceCode} />;
 }

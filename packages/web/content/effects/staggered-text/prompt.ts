@@ -10,9 +10,8 @@ import {
   formatNumber,
   readNumber,
   type Params,
-  type PromptLang,
+  type PromptArgs,
   type Stack,
-  type Variant,
 } from "../types";
 import { STAGGERED as C, staggeredTextSpec as spec } from "./spec";
 
@@ -27,10 +26,10 @@ type StaggeredValues = {
 
 function readValues(params: Params): StaggeredValues {
   return {
-    stagger: readNumber(params, "stagger", 45),
-    duration: readNumber(params, "duration", 520),
-    rise: readNumber(params, "rise", 22),
-    blur: readNumber(params, "blur", 6),
+    stagger: readNumber(params, "stagger", C.defaults.stagger),
+    duration: readNumber(params, "duration", C.defaults.duration),
+    rise: readNumber(params, "rise", C.defaults.rise),
+    blur: readNumber(params, "blur", C.defaults.blur),
   };
 }
 
@@ -132,7 +131,7 @@ const acceptanceLines = (lang: Locale): string[] => spec.checklist[lang];
 function compactRules(stack: Stack, lang: Locale): string[] {
   const en = [
     "- Split CJK per char / Latin per word; spaces as `\\u00A0`; `\\n` as block lines.",
-    "- Per unit: opacity 0 → 1, y rise → 0, blur blur → 0; duration and stagger from the spec; ease cubic-bezier(0.22, 1, 0.36, 1).",
+    `- Per unit: opacity 0 → 1, y rise → 0, blur blur → 0; duration and stagger from the spec; ease ${C.easing}.`,
     "- aria-label full text on the container; aria-hidden on units; reduced motion renders static text.",
     stack === "vanilla"
       ? "- Zero dependencies; keyframes + `--delay` / `--duration` CSS variables."
@@ -145,7 +144,7 @@ function compactRules(stack: Stack, lang: Locale): string[] {
   ];
   const zh = [
     "- 中文按单字、英文按单词；空格写 `\\u00A0`；`\\n` 变成 block 行。",
-    "- 每个单元：opacity 0 → 1、y 上浮 → 0、blur → 0；时长与间隔按规格；缓动 cubic-bezier(0.22, 1, 0.36, 1)。",
+    `- 每个单元：opacity 0 → 1、y 上浮 → 0、blur → 0；时长与间隔按规格；缓动 ${C.easing}。`,
     "- 容器 aria-label 全文、单元 aria-hidden；reduced-motion 直接渲染静态文字。",
     stack === "vanilla"
       ? "- 零依赖；keyframes + `--delay` / `--duration` CSS 变量。"
@@ -164,12 +163,8 @@ export function buildStaggeredPrompt({
   stack,
   variant,
   lang,
-}: {
-  params: Params;
-  stack: Stack;
-  variant: Variant;
-  lang: PromptLang;
-}): string {
+  existingSource = "",
+}: PromptArgs): string {
   const p = readValues(params);
   const stackSpec = spec.stacks[stack];
   const context = stackSpec.context[lang];
@@ -210,8 +205,7 @@ export function buildStaggeredPrompt({
       acceptance: acceptanceLines(lang),
       output: outputLines(stackSpec.files, "retrofit", 7, lang),
       codeFence,
-      placeholder:
-        lang === "en" ? "PASTE YOUR COMPONENT HERE" : "在这里粘贴你的组件",
+      existingSource,
     });
   }
 

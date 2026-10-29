@@ -62,16 +62,20 @@ export function HomeView() {
                 ...(spec.previewParams ?? {}),
               };
               return (
-                <Link
+                <article
                   key={spec.slug}
-                  href={`/effects/${spec.slug}`}
-                  className="group panel overflow-hidden transition-colors hover:border-white/20"
+                  data-effect-card={spec.slug}
+                  aria-labelledby={`effect-card-${spec.slug}`}
+                  className="group panel overflow-hidden transition-colors hover:border-white/20 focus-within:border-white/20"
                 >
                   <div className="dot-grid relative flex h-[300px] items-center justify-center overflow-hidden border-b border-white/[0.06]">
                     <div className="top-glow pointer-events-none absolute inset-0 opacity-70" />
                     <div
                       style={{
                         transform: `scale(${spec.previewScale ?? 1})`,
+                        width: spec.previewWidth
+                          ? `${spec.previewWidth}px`
+                          : undefined,
                       }}
                     >
                       <Demo params={previewParams} locale={locale} />
@@ -83,7 +87,10 @@ export function HomeView() {
                   </div>
                   <div className="p-5">
                     <div className="flex items-baseline justify-between gap-3">
-                      <h3 className="text-[16px] font-medium">
+                      <h3
+                        id={`effect-card-${spec.slug}`}
+                        className="text-[16px] font-medium"
+                      >
                         {spec.name[locale]}
                       </h3>
                       <span className="font-mono text-[10px] text-faint">
@@ -104,13 +111,23 @@ export function HomeView() {
                           </span>
                         ))}
                       </div>
-                      <span className="inline-flex items-center gap-1 text-[11.5px] text-accent transition-transform group-hover:translate-x-0.5">
+                      <Link
+                        href={`/effects/${spec.slug}`}
+                        data-effect-link={spec.slug}
+                        aria-label={`${t.effects.open}: ${spec.name[locale]}`}
+                        className="inline-flex shrink-0 items-center gap-1 rounded-md px-1.5 py-1 text-[11.5px] text-accent transition-[color,background-color] hover:bg-accent/10 hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#C9F45A]"
+                      >
                         {t.effects.open}
-                        <span aria-hidden>→</span>
-                      </span>
+                        <span
+                          aria-hidden
+                          className="transition-transform group-hover:translate-x-0.5"
+                        >
+                          →
+                        </span>
+                      </Link>
                     </div>
                   </div>
-                </Link>
+                </article>
               );
             })}
 

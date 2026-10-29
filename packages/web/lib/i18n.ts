@@ -48,7 +48,7 @@ export const dict = {
     detail: {
       back: "返回效果库",
       stageHint: "把指针移进这片区域",
-      stageHintTouch: "触屏设备：轻按按钮",
+      stageHintTouch: "触屏设备：直接在演示区域操作",
       stageHints: {
         pointer: "把指针移进这片区域",
         text: "点「重播」再看一次",
@@ -79,6 +79,15 @@ export const dict = {
       statsLines: "行",
       sourceTitle: "演示源码",
       sourceNote: "构建时从真实文件读取 —— 这是你真的在看的那份代码，不是另写的示例。",
+      retrofitSource: "现有组件源码",
+      retrofitSourceHint:
+        "仅保存在当前页面内存；不会写入链接、localStorage 或批量导出文件。",
+      retrofitSourcePlaceholder: "粘贴你要改造的组件源码…",
+      retrofitSourceEmpty:
+        "未粘贴源码：提示词会明确要求 AI 先向你索取组件，而不是把占位文字当成代码。",
+      retrofitSourceReady: "源码已附加：提示词会原样包含下面的代码。",
+      retrofitSourceClear: "清空",
+      retrofitSourceChars: "字符",
       specTitle: "技术规格",
       specNote: "提示词里的每一个数字都来自这里。",
       fidelity: {
@@ -174,7 +183,7 @@ export const dict = {
     detail: {
       back: "Back to effects",
       stageHint: "Move your pointer into this field",
-      stageHintTouch: "Touch device: press the button",
+      stageHintTouch: "Touch device: interact directly with the demo",
       stageHints: {
         pointer: "Move your pointer into this field",
         text: "Hit replay to see it again",
@@ -205,6 +214,16 @@ export const dict = {
       statsLines: "lines",
       sourceTitle: "Demo source",
       sourceNote: "Read from the real file at build time — this is the code you are looking at, not a separate example.",
+      retrofitSource: "Existing component source",
+      retrofitSourceHint:
+        "Kept in this page's memory only — never written to the URL, localStorage or batch exports.",
+      retrofitSourcePlaceholder: "Paste the component you want to retrofit…",
+      retrofitSourceEmpty:
+        "No source pasted: the prompt explicitly asks the AI to request your component instead of treating placeholder text as code.",
+      retrofitSourceReady:
+        "Source attached: the prompt includes the code below verbatim.",
+      retrofitSourceClear: "Clear",
+      retrofitSourceChars: "chars",
       specTitle: "Technical spec",
       specNote: "Every number in the prompt comes from here.",
       fidelity: {
