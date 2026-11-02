@@ -1,39 +1,39 @@
 "use client";
 
-import { useCallback, useId, useMemo, useState } from "react";
+import { useCallback, useId, useMemo, useRef, type KeyboardEvent } from "react";
 import { useLocale } from "@/components/providers/Providers";
 import { promptStats } from "@/content/effects/shared/prompt";
 import {
-  STACKS,
+  PROMPT_STACKS,
   VARIANTS,
   type EffectModule,
   type Params,
-  type PromptLang,
-  type Stack,
   type Variant,
 } from "@/content/effects/types";
 import type { Locale } from "@/lib/i18n";
 import { CopyButton } from "@/components/ui/CopyButton";
+import styles from "./PromptPanel.module.css";
 
 type PromptPanelProps = {
   module: EffectModule;
   params: Params;
   demoSourceCode: string;
-  stack: Stack;
+  prompt: string;
   variant: Variant;
-  promptLang: PromptLang;
-  onStackChange: (stack: Stack) => void;
-  onVariantChange: (variant: Variant) => void;
-  onPromptLangChange: (lang: PromptLang) => void;
+  existingSource: string;
+  onExistingSourceChange: (source: string) => void;
+  tab: "prompt" | "source";
+  onTabChange: (tab: "prompt" | "source") => void;
 };
+
+type Tab = "prompt" | "source";
+const TABS: Tab[] = ["prompt", "source"];
 
 function Inline(line: string) {
   const parts = line.split(/(`[^`]+`)/g);
   return parts.map((part, index) =>
     part.startsWith("`") && part.endsWith("`") && part.length > 2 ? (
-      <code key={index} className="prompt-inline-code">
-        {part.slice(1, -1)}
-      </code>
+      <code key={index} className="prompt-inline-code">{part.slice(1, -1)}</code>
     ) : (
       <span key={index}>{part}</span>
     ),
@@ -44,15 +44,11 @@ type PromptBlock =
   | { kind: "text"; lines: string[] }
   | { kind: "code"; lang: string; code: string };
 
-/**
- * Split the generated prompt into prose and fenced code blocks so a pasted
- * component is displayed as code instead of being re-parsed as headings.
- */
+/** Keep a pasted component in its code fence instead of treating it as prose. */
 function parsePrompt(text: string): PromptBlock[] {
   const lines = text.split("\n");
   const blocks: PromptBlock[] = [];
   let textLines: string[] = [];
-
   const flushText = () => {
     if (textLines.length === 0) return;
     blocks.push({ kind: "text", lines: textLines });
@@ -77,40 +73,29 @@ function parsePrompt(text: string): PromptBlock[] {
     }
     textLines.push(line);
   }
-
   flushText();
   return blocks;
 }
 
 function PromptBody({ text }: { text: string }) {
   const blocks = parsePrompt(text);
-
   return (
-    <div className="prompt-body">
+    <div className={`prompt-body ${styles.promptBody}`}>
       {blocks.map((block, blockIndex) => {
         if (block.kind === "code") {
           return (
-            <pre
-              key={`code-${blockIndex}`}
-              data-prompt-code={block.lang || "text"}
-              className="my-2 overflow-x-auto rounded-lg border border-line bg-black/30 p-3 text-[11px] leading-[1.7] text-[#d8d2c2]"
-            >
+            <pre key={`code-${blockIndex}`} data-prompt-code={block.lang || "text"} className={styles.codeBlock}>
               {block.code}
             </pre>
           );
         }
-
         return block.lines.map((line, lineIndex) => {
           const key = `${blockIndex}-${lineIndex}`;
           if (line.startsWith("## ")) {
-            return (
-              <p key={key} className="prompt-h mt-3 first:mt-0">
-                {line.slice(3)}
-              </p>
-            );
+            return <p key={key} className={styles.promptHeading}>{line.slice(3)}</p>;
           }
           if (line.trim().length === 0) {
-            return <p key={key} className="h-[1.4em]" />;
+            return <p key={key} className={styles.blankLine} aria-hidden="true" />;
           }
           return <p key={key}>{Inline(line)}</p>;
         });
@@ -123,50 +108,46 @@ export function PromptPanel({
   module,
   params,
   demoSourceCode,
-  stack,
+  prompt,
   variant,
-  promptLang,
-  onStackChange,
-  onVariantChange,
-  onPromptLangChange,
+  existingSource,
+  onExistingSourceChange,
+  tab,
+  onTabChange,
 }: PromptPanelProps) {
   const { locale, t } = useLocale();
   const spec = module.spec;
-  const [tab, setTab] = useState<"prompt" | "source">("prompt");
-  // Page-memory only: never put this into the URL, storage or batch exports.
-  const [existingSource, setExistingSource] = useState("");
+  const baseId = useId();
   const sourceInputId = useId();
   const sourceHintId = useId();
-
-  const prompt = useMemo(
-    () =>
-      module.buildPrompt({
-        params,
-        stack,
-        variant,
-        lang: promptLang,
-        existingSource,
-      }),
-    [module, params, stack, variant, promptLang, existingSource],
-  );
+  const sourceInputRef = useRef<HTMLTextAreaElement>(null);
+  const tabRefs = useRef<Partial<Record<Tab, HTMLButtonElement | null>>>({});
   const stats = useMemo(() => promptStats(prompt), [prompt]);
   const hasExistingSource = existingSource.trim().length > 0;
 
+  function handleTabKeyDown(event: KeyboardEvent<HTMLButtonElement>, current: Tab) {
+    const index = TABS.indexOf(current);
+    let next: Tab;
+    if (event.key === "ArrowRight") next = TABS[(index + 1) % TABS.length];
+    else if (event.key === "ArrowLeft") next = TABS[(index + TABS.length - 1) % TABS.length];
+    else if (event.key === "Home") next = TABS[0];
+    else if (event.key === "End") next = TABS[TABS.length - 1];
+    else return;
+    event.preventDefault();
+    onTabChange(next);
+    tabRefs.current[next]?.focus();
+  }
+
   const handleExportAll = useCallback(() => {
     const parts: string[] = [];
-    for (const stackItem of STACKS) {
+    for (const stackItem of PROMPT_STACKS) {
       for (const variantItem of VARIANTS) {
         for (const langItem of ["zh", "en"] as Locale[]) {
-          // Deliberately no existingSource: pasted code never leaves the page.
+          // Pasted source stays out of the batch export and shared state.
           parts.push(
             `# ${spec.slug} · ${stackItem} · ${variantItem} · ${langItem}`,
             "",
-            module.buildPrompt({
-              params,
-              stack: stackItem,
-              variant: variantItem,
-              lang: langItem,
-            }),
+            module.buildPrompt({ params, stack: stackItem, variant: variantItem, lang: langItem }),
             "",
             "---",
             "",
@@ -174,9 +155,7 @@ export function PromptPanel({
         }
       }
     }
-    const blob = new Blob([parts.join("\n")], {
-      type: "text/markdown;charset=utf-8",
-    });
+    const blob = new Blob([parts.join("\n")], { type: "text/markdown;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
@@ -188,244 +167,104 @@ export function PromptPanel({
   }, [module, params, spec.slug]);
 
   return (
-    <section className="panel flex max-h-[calc(100vh-6rem)] flex-col overflow-hidden">
-      <div className="flex items-center justify-between gap-3 border-b border-white/[0.07] px-4 py-2.5">
-        <div className="flex items-center gap-1">
-          <button
-            type="button"
-            onClick={() => setTab("prompt")}
-            aria-pressed={tab === "prompt"}
-            className={`rounded-lg px-2.5 py-1.5 text-[12.5px] transition-colors ${
-              tab === "prompt"
-                ? "bg-white/[0.08] text-ink"
-                : "text-faint hover:text-muted"
-            }`}
-          >
-            {t.detail.prompt}
-          </button>
-          <button
-            type="button"
-            onClick={() => setTab("source")}
-            aria-pressed={tab === "source"}
-            className={`rounded-lg px-2.5 py-1.5 text-[12.5px] transition-colors ${
-              tab === "source"
-                ? "bg-white/[0.08] text-ink"
-                : "text-faint hover:text-muted"
-            }`}
-          >
-            {t.detail.source}
-          </button>
+    <section id="effect-output" className={styles.panel} aria-label={locale === "zh" ? "提示词与源码" : "Prompt and source"}>
+      <header className={styles.header}>
+        <div role="tablist" aria-label={locale === "zh" ? "查看提示词或源码" : "View prompt or source"} className={styles.tabs}>
+          {TABS.map((item) => (
+            <button
+              key={item}
+              ref={(element) => { tabRefs.current[item] = element; }}
+              type="button"
+              role="tab"
+              id={`${baseId}-tab-${item}`}
+              aria-controls={`${baseId}-panel-${item}`}
+              aria-selected={tab === item}
+              tabIndex={tab === item ? 0 : -1}
+              onClick={() => onTabChange(item)}
+              onKeyDown={(event) => handleTabKeyDown(event, item)}
+            >
+              {item === "prompt" ? t.detail.prompt : t.detail.source}
+            </button>
+          ))}
         </div>
-        <div className="flex items-center gap-2">
-          <span className="mono-label hidden sm:inline">
-            {tab === "prompt" ? t.detail.promptNote : "build-time read"}
-          </span>
-          {tab === "prompt" ? (
+        <div className={styles.actions}>
+          {tab === "prompt" && (
             <button
               type="button"
               onClick={handleExportAll}
-              title={`${t.detail.exportAll} · ${STACKS.length * VARIANTS.length * 2}`}
-              className="hairline inline-flex items-center gap-1.5 rounded-lg px-2 py-1 font-mono text-[10px] uppercase tracking-[0.1em] text-faint transition-colors hover:bg-white/[0.05] hover:text-ink"
+              title={`${t.detail.exportAll} · ${PROMPT_STACKS.length * VARIANTS.length * 2}`}
+              className={styles.export}
             >
-              <svg
-                width="11"
-                height="11"
-                viewBox="0 0 16 16"
-                fill="none"
-                aria-hidden
-              >
-                <path
-                  d="M8 2v8m0 0 3-3m-3 3L5 7M3 12.5v1.2c0 .7.6 1.3 1.3 1.3h7.4c.7 0 1.3-.6 1.3-1.3v-1.2"
-                  stroke="currentColor"
-                  strokeWidth="1.3"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-              <span className="hidden sm:inline">{t.detail.exportAll}</span>
+              {t.detail.exportAll}
             </button>
-          ) : null}
+          )}
+          <CopyButton
+            key={tab}
+            text={tab === "prompt" ? prompt : demoSourceCode}
+            label={tab === "prompt" ? t.detail.copyPrompt : t.detail.copyCode}
+            copiedLabel={t.detail.copied}
+            failedLabel={t.toast.failed}
+            variant="ghost"
+            className={styles.copyButton}
+          />
         </div>
+      </header>
+
+      <div role="tabpanel" id={`${baseId}-panel-prompt`} aria-labelledby={`${baseId}-tab-prompt`} hidden={tab !== "prompt"}>
+        {variant === "retrofit" && (
+          <div className={styles.retrofit} data-retrofit-source-state={hasExistingSource ? "filled" : "empty"}>
+            <div className={styles.retrofitHeading}>
+              <label htmlFor={sourceInputId}>{t.detail.retrofitSource}</label>
+              <div className={styles.sourceActions}>
+                <span>{existingSource.length.toLocaleString()} {t.detail.retrofitSourceChars}</span>
+                {existingSource.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onExistingSourceChange("");
+                      sourceInputRef.current?.focus();
+                    }}
+                  >
+                    {t.detail.retrofitSourceClear}
+                  </button>
+                )}
+              </div>
+            </div>
+            <textarea
+              ref={sourceInputRef}
+              id={sourceInputId}
+              data-retrofit-source
+              value={existingSource}
+              onChange={(event) => onExistingSourceChange(event.target.value)}
+              rows={5}
+              spellCheck={false}
+              aria-describedby={sourceHintId}
+              placeholder={t.detail.retrofitSourcePlaceholder}
+            />
+            <p id={sourceHintId}>{t.detail.retrofitSourceHint}</p>
+            <p className={hasExistingSource ? styles.sourceReady : ""} role="status">
+              {hasExistingSource ? t.detail.retrofitSourceReady : t.detail.retrofitSourceEmpty}
+            </p>
+          </div>
+        )}
+        <div className={`prompt-scroll ${styles.scroll}`} tabIndex={0} role="region" aria-label={locale === "zh" ? "完整提示词内容" : "Full prompt content"}>
+          <PromptBody text={prompt} />
+        </div>
+        <footer className={styles.footer}>
+          <span>{t.detail.promptNote}</span>
+          <span className={styles.stats}>
+            {stats.chars.toLocaleString()} {t.detail.statsChars} · {stats.tokens.toLocaleString()} {t.detail.statsTokens} · {stats.lines} {t.detail.statsLines}
+          </span>
+        </footer>
       </div>
 
-      {tab === "prompt" ? (
-        <>
-          <div className="border-b border-white/[0.07] px-4 py-3.5">
-            <div className="flex items-center justify-between">
-              <span className="mono-label">{t.detail.stack}</span>
-              <div className="flex items-center gap-1 rounded-md border border-line p-0.5">
-                {(["en", "zh"] as Locale[]).map((lang) => (
-                  <button
-                    key={lang}
-                    type="button"
-                    onClick={() => onPromptLangChange(lang)}
-                    aria-pressed={promptLang === lang}
-                    className={`rounded px-1.5 py-0.5 font-mono text-[10px] uppercase transition-colors ${
-                      promptLang === lang
-                        ? "bg-white/10 text-ink"
-                        : "text-faint hover:text-muted"
-                    }`}
-                  >
-                    {lang}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <div className="mt-2 grid grid-cols-2 gap-1.5">
-              {STACKS.map((item) => (
-                <button
-                  key={item}
-                  type="button"
-                  onClick={() => onStackChange(item)}
-                  aria-pressed={stack === item}
-                  className={`rounded-lg border px-2.5 py-2 text-left text-[11.5px] leading-tight transition-colors ${
-                    stack === item
-                      ? "border-accent/40 bg-accent/[0.08] text-accent"
-                      : "border-line text-muted hover:border-white/20 hover:text-ink"
-                  }`}
-                >
-                  {spec.stacks[item].label}
-                </button>
-              ))}
-            </div>
-            <p className="mt-2 text-[11px] leading-relaxed text-faint">
-              {t.detail.stackHints[stack]}
-            </p>
-
-            <div className="mt-3.5 grid grid-cols-3 gap-1.5">
-              {VARIANTS.map((item) => (
-                <button
-                  key={item}
-                  type="button"
-                  onClick={() => onVariantChange(item)}
-                  aria-pressed={variant === item}
-                  className={`rounded-lg border px-2 py-1.5 text-[11.5px] transition-colors ${
-                    variant === item
-                      ? "border-white/25 bg-white/[0.07] text-ink"
-                      : "border-line text-faint hover:text-muted"
-                  }`}
-                >
-                  {item === "full"
-                    ? locale === "zh"
-                      ? "完整版"
-                      : "Full"
-                    : item === "compact"
-                      ? locale === "zh"
-                        ? "精简版"
-                        : "Compact"
-                      : locale === "zh"
-                        ? "改造版"
-                        : "Retrofit"}
-                </button>
-              ))}
-            </div>
-            <p className="mt-2 text-[11px] leading-relaxed text-faint">
-              {t.detail.variantHints[variant]}
-            </p>
-
-            {variant === "retrofit" ? (
-              <div
-                className="mt-3 rounded-lg border border-line bg-black/20 p-2.5"
-                data-retrofit-source-state={
-                  hasExistingSource ? "filled" : "empty"
-                }
-              >
-                <div className="flex items-center justify-between gap-2">
-                  <label
-                    htmlFor={sourceInputId}
-                    className="text-[11.5px] text-ink"
-                  >
-                    {t.detail.retrofitSource}
-                  </label>
-                  <div className="flex items-center gap-2">
-                    <span className="font-mono text-[10px] text-faint">
-                      {existingSource.length} {t.detail.retrofitSourceChars}
-                    </span>
-                    {existingSource.length > 0 ? (
-                      <button
-                        type="button"
-                        onClick={() => setExistingSource("")}
-                        className="rounded px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-[0.08em] text-faint transition-colors hover:bg-white/[0.05] hover:text-ink"
-                      >
-                        {t.detail.retrofitSourceClear}
-                      </button>
-                    ) : null}
-                  </div>
-                </div>
-                <textarea
-                  id={sourceInputId}
-                  data-retrofit-source
-                  value={existingSource}
-                  onChange={(event) => setExistingSource(event.target.value)}
-                  rows={4}
-                  spellCheck={false}
-                  aria-describedby={sourceHintId}
-                  placeholder={t.detail.retrofitSourcePlaceholder}
-                  className="mt-2 max-h-40 w-full resize-y rounded-md border border-line bg-void/70 p-2 font-mono text-[10.5px] leading-relaxed text-ink placeholder:text-faint focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-accent"
-                />
-                <p
-                  id={sourceHintId}
-                  className="mt-1.5 text-[10.5px] leading-relaxed text-faint"
-                >
-                  {t.detail.retrofitSourceHint}
-                </p>
-                <p
-                  className={`mt-1 text-[10.5px] leading-relaxed ${
-                    hasExistingSource ? "text-accent/80" : "text-faint"
-                  }`}
-                  role="status"
-                >
-                  {hasExistingSource
-                    ? t.detail.retrofitSourceReady
-                    : t.detail.retrofitSourceEmpty}
-                </p>
-              </div>
-            ) : null}
-          </div>
-
-          <div className="prompt-scroll min-h-0 flex-1 overflow-y-auto px-4 py-4">
-            <PromptBody text={prompt} />
-          </div>
-
-          <div className="flex items-center justify-between gap-2 border-t border-white/[0.07] px-4 py-3">
-            <div className="min-w-0 truncate font-mono text-[10.5px] text-faint">
-              {stats.chars.toLocaleString()} {t.detail.statsChars} · ~
-              {stats.tokens.toLocaleString()} {t.detail.statsTokens} ·{" "}
-              {stats.lines} {t.detail.statsLines}
-            </div>
-            <CopyButton
-              text={prompt}
-              label={t.detail.copyPrompt}
-              copiedLabel={t.detail.copied}
-              failedLabel={t.toast.failed}
-            />
-          </div>
-        </>
-      ) : (
-        <>
-          <div className="flex items-center justify-between gap-3 border-b border-white/[0.07] px-4 py-2.5">
-            <span className="font-mono text-[11px] text-muted">
-              {spec.sourcePath}
-            </span>
-            <CopyButton
-              text={demoSourceCode}
-              label={t.detail.copyCode}
-              copiedLabel={t.detail.copied}
-              failedLabel={t.toast.failed}
-              variant="ghost"
-              className="px-2.5! py-1! text-[11px]!"
-            />
-          </div>
-          <div className="prompt-scroll min-h-0 flex-1 overflow-auto px-4 py-4">
-            <pre className="whitespace-pre text-[11px] leading-[1.7] text-[#b9bdc4]">
-              {demoSourceCode}
-            </pre>
-          </div>
-          <p className="border-t border-white/[0.07] px-4 py-3 text-[11px] leading-relaxed text-faint">
-            {t.detail.sourceNote}
-          </p>
-        </>
-      )}
+      <div role="tabpanel" id={`${baseId}-panel-source`} aria-labelledby={`${baseId}-tab-source`} hidden={tab !== "source"}>
+        <div className={styles.sourcePath}>{spec.sourcePath}</div>
+        <div className={`prompt-scroll ${styles.scroll}`} tabIndex={0} role="region" aria-label={t.detail.sourceTitle}>
+          <pre className={styles.sourceCode}>{demoSourceCode}</pre>
+        </div>
+        <p className={styles.sourceNote}>{t.detail.sourceNote}</p>
+      </div>
     </section>
   );
 }

@@ -1,3 +1,4 @@
+import { assembleUniversal } from "../shared/universal-prompt";
 import type { Locale } from "@/lib/i18n";
 import {
   assembleCompact,
@@ -12,6 +13,7 @@ import {
   readNumber,
   type Params,
   type PromptArgs,
+  type PromptStack,
   type Stack,
 } from "../types";
 import { ANIMATED_NUMBER as C, animatedNumberSpec as spec } from "./spec";
@@ -53,14 +55,16 @@ function specLines(p: AnimatedNumberValues, lang: Locale): string[] {
   ];
 }
 
-function behaviorLines(stack: Stack, lang: Locale): string[] {
+function behaviorLines(stack: PromptStack, lang: Locale): string[] {
   const en: string[] = [
     "- State machine (text diagram):",
     "  `idle` —(target changes to a finite value, no reduced motion)→ `tweening { from: displayed, start: now }`",
     "  `tweening` —(target changes again)→ `tweening { from: displayed, start: now }` (cancel the pending frame first)",
     "  `tweening` —(elapsed ≥ duration)→ `settled { display: target }` (write the final value, stop)",
     "  `idle | tweening` —(target is non-finite: NaN / ±Infinity)→ `passthrough { display: String(target) }`",
-    "  `tweening` —(unmount)→ `cancelled` (cancelAnimationFrame; never setState afterwards)",
+    stack === "auto"
+      ? "  `tweening` —(unmount)→ `cancelled` (cancelAnimationFrame; never update component state afterwards)"
+      : "  `tweening` —(unmount)→ `cancelled` (cancelAnimationFrame; never setState afterwards)",
     "  reduced motion: `idle | passthrough` —(target changes)→ `settled` (write the final value in ≤1ms, never start rAF)",
     "- The first render is never animated; only a later `value` change starts a tween.",
     "- Rapid retargeting must stay smooth: each new target reads the mid-tween displayed value, not the previous target.",
@@ -73,7 +77,9 @@ function behaviorLines(stack: Stack, lang: Locale): string[] {
     "  `tweening` —(target 再次变化)→ `tweening { from: 当前显示值, start: now }`（先取消未执行的帧）",
     "  `tweening` —(elapsed ≥ duration)→ `settled { display: target }`（写入终值并停止）",
     "  `idle | tweening` —(target 非有限：NaN / ±Infinity)→ `passthrough { display: String(target) }`",
-    "  `tweening` —(卸载)→ `cancelled`（cancelAnimationFrame，之后不再 setState）",
+    stack === "auto"
+      ? "  `tweening` —(卸载)→ `cancelled`（cancelAnimationFrame，之后不再更新组件状态）"
+      : "  `tweening` —(卸载)→ `cancelled`（cancelAnimationFrame，之后不再 setState）",
     "  reduced-motion：`idle | passthrough` —(target 变化)→ `settled`（≤1ms 内写入终值，绝不启动 rAF）",
     "- 首帧不播动画；只有之后的 `value` 变化才启动补间。",
     "- 连续改目标必须顺滑：每次新目标都读取补间中正在显示的数值，而不是上一个目标值。",
@@ -81,7 +87,11 @@ function behaviorLines(stack: Stack, lang: Locale): string[] {
     "- `aria-label` / role / 可见文案属于外层 UI：不要新增、改名或删除。",
   ];
   const cleanup =
-    stack === "vanilla"
+    stack === "auto"
+      ? lang === "en"
+        ? "- Use the detected host lifecycle to cancel pending frames and any active tween, remove listeners and restore any generated display content on teardown; do not add timers or document/window listeners and never update state after teardown."
+        : "- 按识别出的宿主生命周期取消未执行的帧与补间、移除监听，销毁时还原生成的显示内容；不要新增计时器或 document/window 监听，销毁后不要更新状态。"
+      : stack === "vanilla"
       ? lang === "en"
         ? "- `destroy()` must cancel the pending animation frame, drop every listener and empty the element; nothing may keep running after teardown."
         : "- `destroy()` 必须取消未执行的动画帧、移除全部监听并清空元素；销毁后不允许还有逻辑在跑。"
@@ -99,9 +109,13 @@ function behaviorLines(stack: Stack, lang: Locale): string[] {
   return lang === "en" ? [...en, cleanup] : [...zh, cleanup];
 }
 
-function forbiddenLines(stack: Stack, lang: Locale): string[] {
+function forbiddenLines(stack: PromptStack, lang: Locale): string[] {
   const stackExtra =
-    stack === "vanilla"
+    stack === "auto"
+      ? lang === "en"
+        ? "- Reuse the detected project capabilities or native browser APIs; do not assume or add a framework, styling system or animation dependency."
+        : "- 复用识别出的项目能力或原生浏览器 API；不要假设或新增框架、样式系统或动画依赖。"
+      : stack === "vanilla"
       ? lang === "en"
         ? "- Do not introduce a framework, a build step or an animation library."
         : "- 不要引入框架、构建步骤或动画库。"
@@ -123,7 +137,9 @@ function forbiddenLines(stack: Stack, lang: Locale): string[] {
       "- Do not animate width, height, top or left frame by frame; the number only updates text content.",
       "- Do not chain `setTimeout` / `setInterval` calls to fake the tween — use requestAnimationFrame (or the stack's tween engine).",
       "- Do not add dependencies or upgrade the ones already installed.",
-      "- Do not touch global CSS, the Tailwind config or any file other than the one(s) listed above.",
+      stack === "auto"
+        ? "- Do not modify project configuration, global styles or any file outside the minimal change scope determined from the actual project."
+        : "- Do not touch global CSS, the Tailwind config or any file other than the one(s) listed above.",
       "- No TODOs, no `// rest of the code`, no `any`, no console.log, no commented-out experiments.",
       stackExtra,
     ];
@@ -133,7 +149,9 @@ function forbiddenLines(stack: Stack, lang: Locale): string[] {
     "- 不要逐帧动画 width / height / top / left；数字只更新文本内容。",
     "- 不要用链式 `setTimeout` / `setInterval` 拼补间——用 requestAnimationFrame（或目标栈的补间引擎）。",
     "- 不要新增依赖，也不要升级已安装的依赖。",
-    "- 不要改动全局 CSS、Tailwind 配置或上面文件之外的任何文件。",
+    stack === "auto"
+      ? "- 不要修改项目配置、全局样式或实际项目确定的最小改动范围之外的文件。"
+      : "- 不要改动全局 CSS、Tailwind 配置或上面文件之外的任何文件。",
     "- 不要留 TODO、不要写 `// 其余代码`、不要用 `any`、不要 console.log、不要留注释掉的实验代码。",
     stackExtra,
   ];
@@ -179,6 +197,18 @@ export function buildAnimatedNumberPrompt({
   existingSource = "",
 }: PromptArgs): string {
   const p = readValues(params);
+  if (stack === "auto") {
+    return assembleUniversal({
+      effect: spec,
+      params,
+      lang,
+      variant,
+      spec: specLines(p, lang),
+      behavior: behaviorLines("auto", lang),
+      forbidden: forbiddenLines("auto", lang),
+      existingSource,
+    });
+  }
   const stackSpec = spec.stacks[stack];
   const context = stackSpec.context[lang];
   const depsLine =

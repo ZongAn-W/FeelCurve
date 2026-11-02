@@ -1,3 +1,4 @@
+import { assembleUniversal } from "../shared/universal-prompt";
 import type { Locale } from "@/lib/i18n";
 import {
   assembleCompact,
@@ -12,6 +13,7 @@ import {
   readNumber,
   type Params,
   type PromptArgs,
+  type PromptStack,
   type Stack,
   type Variant,
 } from "../types";
@@ -74,7 +76,7 @@ function specLines(p: MagneticValues, lang: Locale): string[] {
   ];
 }
 
-function behaviorLines(stack: Stack, lang: Locale): string[] {
+function behaviorLines(stack: PromptStack, lang: Locale): string[] {
   const en: string[] = [
     "- Bind Pointer Events on the field wrapper (not mouse events). Read the button's rect on pointerenter and when a pointermove interaction begins — parents can scroll.",
     "- pointerleave: spring back to offset 0 immediately. The button must never stay offset.",
@@ -92,7 +94,11 @@ function behaviorLines(stack: Stack, lang: Locale): string[] {
     "- `prefers-reduced-motion: reduce` 时禁用吸附、缩放与光晕动画，但保留 hover / focus 样式。",
   ];
   const cleanup =
-    stack === "vanilla"
+    stack === "auto"
+      ? lang === "en"
+        ? "- Use the detected host lifecycle to cancel animations and pending frames and remove listeners; do not add document/window listeners or update reactive state every frame."
+        : "- 按识别出的宿主生命周期取消动画与未执行的帧、移除监听；不要新增 document/window 监听，也不要逐帧触发响应式状态更新。"
+      : stack === "vanilla"
       ? lang === "en"
         ? "- Remove every listener and cancel the animation frame inside `destroy()`; nothing may keep running after teardown."
         : "- 所有监听和动画帧都在 `destroy()` 中移除或取消，销毁后不允许有任何逻辑继续运行。"
@@ -107,12 +113,16 @@ function behaviorLines(stack: Stack, lang: Locale): string[] {
 }
 
 function forbiddenLines(
-  stack: Stack,
+  stack: PromptStack,
   p: MagneticValues,
   lang: Locale,
 ): string[] {
   const stackExtra =
-    stack === "vanilla"
+    stack === "auto"
+      ? lang === "en"
+        ? "- Reuse the detected project capabilities or native browser APIs; do not assume or add a framework, styling system or animation dependency."
+        : "- 复用识别出的项目能力或原生浏览器 API；不要假设或新增框架、样式系统或动画依赖。"
+      : stack === "vanilla"
       ? lang === "en"
         ? "- Do not introduce a framework, a build step or an animation library."
         : "- 不要引入框架、构建步骤或动画库。"
@@ -136,7 +146,9 @@ function forbiddenLines(
       "- Do not put a CSS transition on transform while the spring is driving it.",
       "- No TODOs, no `// rest of the code`, no `any`, no console.log, no commented-out experiments.",
       "- Do not wrap the component in a page, layout, demo shell or provider.",
-      "- Do not touch global CSS, the Tailwind config or any file other than the one(s) listed above.",
+      stack === "auto"
+        ? "- Do not modify project configuration, global styles or any file outside the minimal change scope determined from the actual project."
+        : "- Do not touch global CSS, the Tailwind config or any file other than the one(s) listed above.",
       stackExtra,
     ];
   }
@@ -147,7 +159,9 @@ function forbiddenLines(
     "- 弹簧驱动 transform 的同时，不要再给它加 CSS transition。",
     "- 不要留 TODO、不要写 `// 其余代码`、不要用 `any`、不要 console.log、不要留注释掉的实验代码。",
     "- 不要把组件包进页面、布局、演示壳或 Provider。",
-    "- 不要改动全局 CSS、Tailwind 配置或上面文件之外的任何文件。",
+    stack === "auto"
+      ? "- 不要修改项目配置、全局样式或实际项目确定的最小改动范围之外的文件。"
+      : "- 不要改动全局 CSS、Tailwind 配置或上面文件之外的任何文件。",
     stackExtra,
   ];
 }
@@ -190,6 +204,18 @@ export function buildMagneticPrompt({
   existingSource = "",
 }: PromptArgs): string {
   const p = readValues(params);
+  if (stack === "auto") {
+    return assembleUniversal({
+      effect: spec,
+      params,
+      lang,
+      variant,
+      spec: specLines(p, lang),
+      behavior: behaviorLines("auto", lang),
+      forbidden: forbiddenLines("auto", p, lang),
+      existingSource,
+    });
+  }
   const stackSpec = spec.stacks[stack];
   const context = stackSpec.context[lang];
   const depsLine =

@@ -37,6 +37,7 @@ export default function RootLayout({
   return (
     <html
       lang="zh-CN"
+      data-scroll-behavior="smooth"
       className={displayFont.variable}
       suppressHydrationWarning
     >

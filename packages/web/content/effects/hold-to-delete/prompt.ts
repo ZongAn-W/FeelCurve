@@ -1,3 +1,4 @@
+import { assembleUniversal } from "../shared/universal-prompt";
 import type { Locale } from "@/lib/i18n";
 import {
   assembleCompact,
@@ -11,6 +12,7 @@ import {
   readNumber,
   type Params,
   type PromptArgs,
+  type PromptStack,
   type Stack,
   type Variant,
 } from "../types";
@@ -56,9 +58,13 @@ function specLines(p: HoldValues, lang: Locale): string[] {
   ];
 }
 
-function behaviorLines(stack: Stack, p: HoldValues, lang: Locale): string[] {
+function behaviorLines(stack: PromptStack, p: HoldValues, lang: Locale): string[] {
   const cleanup =
-    stack === "vanilla"
+    stack === "auto"
+      ? lang === "en"
+        ? "- Use the detected host lifecycle to cancel the progress frame loop and retreat timer, remove pointer and keyboard listeners including any window keyup listener, and restore temporary styles; never update state after teardown."
+        : "- 按识别出的宿主生命周期取消进度帧循环与回退计时器，移除指针和键盘监听（包括可能的 window keyup 监听），并还原临时样式；销毁后不要更新状态。"
+      : stack === "vanilla"
       ? lang === "en"
         ? "- Remove every listener inside `destroy()`, cancel the rAF and the retreat timer, and restore all inline styles so nothing keeps running after teardown."
         : "- 所有监听都在 `destroy()` 中移除，取消 rAF 与回退 timer，并还原所有行内样式；销毁后不允许有任何逻辑继续运行。"
@@ -79,7 +85,9 @@ function behaviorLines(stack: Stack, p: HoldValues, lang: Locale): string[] {
       "- The trigger is a real `<button type=\"button\">`; pointerdown / keydown start the countdown and pointerup / pointerleave / pointercancel / keyup / Escape cancel it.",
       `- Text state machine: idle --pointerdown | keydown(Space/Enter)--> holding (progress 0 → 1 linearly over ${n(p.holdMs)}ms, rAF driver) --> confirmed (progress hit exactly 1, onConfirm fired once) --> deleted; holding --pointerup | pointerleave | pointercancel | keyup | Escape--> cancelling (ring retreats over ≤${n(p.resetMs)}ms) --> idle; deleted --undo--> idle; any state --reduced motion--> same hold duration, only the state transitions collapse to ≤1ms.`,
       "- Guard re-entry: while a hold is active ignore further pointerdown / repeated keydown (`event.repeat`), and after confirmation do not start another hold until the parent resets. Never set `disabled` — it would drop focus.",
-      "- Drive progress with one `requestAnimationFrame` loop that writes `stroke-dashoffset` directly; do not put the running progress into React state and do not chain timeouts.",
+      stack === "auto"
+        ? "- Drive progress with one `requestAnimationFrame` loop that writes `stroke-dashoffset` directly; do not rerender the component or update reactive state every frame, and do not chain timeouts."
+        : "- Drive progress with one `requestAnimationFrame` loop that writes `stroke-dashoffset` directly; do not put the running progress into React state and do not chain timeouts.",
       `- Cancel path: stop the rAF, add \`transition: stroke-dashoffset ${n(p.resetMs)}ms linear\` and retreat the ring to empty at the ratio already shown, then remove the inline transition after the retreat ends.`,
       "- Keyboard and a11y: the button is focusable, `aria-label` states how many seconds to hold, an `aria-live=\"polite\"` node announces start / cancelled / deleted, focus-visible outline is 2px #C9F45A at 3px offset, and the accessible name never changes mid-gesture.",
       `- prefers-reduced-motion: keep holdMs at ${n(p.holdMs)}ms and the linear progress in real time; only the cancel / delete visual state changes collapse to ≤1ms. A destructive delay must not be shortened.`,
@@ -90,7 +98,9 @@ function behaviorLines(stack: Stack, p: HoldValues, lang: Locale): string[] {
     "- 触发元素是真实的 `<button type=\"button\">`；pointerdown / keydown 开始计时，pointerup / pointerleave / pointercancel / keyup / Escape 取消计时。",
     `- 文字状态机：idle --pointerdown 或 keydown(Space/Enter)--> holding（进度在 ${n(p.holdMs)}ms 内线性 0 → 1，rAF 驱动）--> confirmed（进度精确到 1，onConfirm 只触发一次）--> deleted；holding --pointerup 或 pointerleave 或 pointercancel 或 keyup 或 Escape--> cancelling（环在 ≤${n(p.resetMs)}ms 内退回）--> idle；deleted --撤销--> idle；任意状态 --reduced motion--> 长按时长不变，仅状态切换压到 ≤1ms。`,
     "- 防重复进入：按住期间忽略后续 pointerdown / 重复 keydown（`event.repeat`）；确认之后要等父组件复位才能再次按住。绝不设置 `disabled`——那会丢掉焦点。",
-    "- 进度用唯一的 `requestAnimationFrame` 循环直接写 `stroke-dashoffset`；不要在 React state 里每帧更新进度，也不要链式 setTimeout。",
+    stack === "auto"
+      ? "- 进度用唯一的 `requestAnimationFrame` 循环直接写 `stroke-dashoffset`；不要逐帧重新渲染组件或更新响应式状态，也不要链式 setTimeout。"
+      : "- 进度用唯一的 `requestAnimationFrame` 循环直接写 `stroke-dashoffset`；不要在 React state 里每帧更新进度，也不要链式 setTimeout。",
     `- 取消路径：停掉 rAF，给环加 \`transition: stroke-dashoffset ${n(p.resetMs)}ms linear\`，按已显示的比例把环退回空心，回退结束后移除内联 transition。`,
     "- 键盘与无障碍：按钮可聚焦；`aria-label` 写明需要按住几秒；`aria-live=\"polite\"` 播报开始 / 取消 / 已删除；focus-visible 描边 2px #C9F45A、外扩 3px；手势过程中可访问名称不改变。",
     `- prefers-reduced-motion：holdMs 保持 ${n(p.holdMs)}ms、进度按真实时间线性推进，只有取消 / 删除的视觉状态切换压到 ≤1ms；破坏性操作的等待不允许被缩短。`,
@@ -99,12 +109,16 @@ function behaviorLines(stack: Stack, p: HoldValues, lang: Locale): string[] {
 }
 
 function forbiddenLines(
-  stack: Stack,
+  stack: PromptStack,
   p: HoldValues,
   lang: Locale,
 ): string[] {
   const stackExtra =
-    stack === "vanilla"
+    stack === "auto"
+      ? lang === "en"
+        ? "- Reuse the detected project capabilities or native browser APIs; do not assume or add a framework, styling system or animation dependency."
+        : "- 复用识别出的项目能力或原生浏览器 API；不要假设或新增框架、样式系统或动画依赖。"
+      : stack === "vanilla"
       ? lang === "en"
         ? "- Do not introduce a framework, a build step or an animation library."
         : "- 不要引入框架、构建步骤或动画库。"
@@ -139,7 +153,9 @@ function forbiddenLines(
       "- Do not fire `onConfirm` twice, and never confirm on pointerup before the ring is completely full.",
       "- No TODOs, no `// rest of the code`, no `any`, no console.log, no commented-out experiments.",
       "- Do not hardcode a hold or reset duration other than the `holdMs` / `resetMs` props (falling back to the documented defaults).",
-      "- Do not modify package.json, global CSS, the Tailwind config or any other existing file.",
+      stack === "auto"
+        ? "- Do not modify project configuration, global styles or any file outside the minimal change scope determined from the actual project."
+        : "- Do not modify package.json, global CSS, the Tailwind config or any other existing file.",
       stackExtra,
     ];
   }
@@ -152,7 +168,9 @@ function forbiddenLines(
     "- 不要重复触发 `onConfirm`，也绝不能在环填满之前靠 pointerup 确认删除。",
     "- 不要留 TODO、不要写 `// 其余代码`、不要用 `any`、不要 console.log、不要留注释掉的实验代码。",
     "- 除 `holdMs` / `resetMs` 参数与文档默认值外不要硬编码按住或回退时长。",
-    "- 不要修改 package.json、全局 CSS、Tailwind 配置或任何其他已有文件。",
+    stack === "auto"
+      ? "- 不要修改项目配置、全局样式或实际项目确定的最小改动范围之外的文件。"
+      : "- 不要修改 package.json、全局 CSS、Tailwind 配置或任何其他已有文件。",
     stackExtra,
   ];
 }
@@ -199,6 +217,18 @@ export function buildHoldToDeletePrompt({
   existingSource = "",
 }: PromptArgs): string {
   const p = readValues(params);
+  if (stack === "auto") {
+    return assembleUniversal({
+      effect: spec,
+      params,
+      lang,
+      variant,
+      spec: specLines(p, lang),
+      behavior: behaviorLines("auto", p, lang),
+      forbidden: forbiddenLines("auto", p, lang),
+      existingSource,
+    });
+  }
   const stackSpec = spec.stacks[stack];
   const context = stackSpec.context[lang];
   const depsLine =

@@ -1,6 +1,6 @@
 "use client";
 
-import type { CSSProperties } from "react";
+import { useId, type CSSProperties } from "react";
 import { useLocale } from "@/components/providers/Providers";
 import {
   paramDisplay,
@@ -11,6 +11,7 @@ import {
   type Params,
 } from "@/content/effects/types";
 import { SpringCurve } from "./SpringCurve";
+import styles from "./ParamControls.module.css";
 
 type ShareStatus = "idle" | "shared" | "failed";
 
@@ -32,6 +33,7 @@ export function ParamControls({
   shareStatus,
 }: ParamControlsProps) {
   const { locale, t } = useLocale();
+  const panelId = useId();
 
   const numbers = spec.params.filter(
     (param): param is NumberParam => param.kind === "number",
@@ -44,78 +46,31 @@ export function ParamControls({
     spec.params.some((param) => param.key === "damping");
 
   return (
-    <section className="panel p-5 sm:p-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h2 className="text-[14px] font-medium">{t.detail.params}</h2>
-          <p className="mt-1 text-[12px] leading-relaxed text-faint">
-            {t.detail.paramsNote}
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={onShare}
-            aria-live="polite"
-            className={`hairline inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[11.5px] text-muted transition-colors hover:bg-white/[0.05] hover:text-ink ${
-              shareStatus === "failed" ? "ring-1 ring-[#f87171]/70" : ""
-            }`}
-          >
-            <svg width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden>
-              <path
-                d="M6.3 9.7a2.6 2.6 0 0 0 3.7 0l2.2-2.2a2.6 2.6 0 1 0-3.7-3.7l-1 1"
-                stroke="currentColor"
-                strokeWidth="1.3"
-                strokeLinecap="round"
-              />
-              <path
-                d="M9.7 6.3a2.6 2.6 0 0 0-3.7 0L3.8 8.5a2.6 2.6 0 1 0 3.7 3.7l1-1"
-                stroke="currentColor"
-                strokeWidth="1.3"
-                strokeLinecap="round"
-              />
-            </svg>
-            {shareStatus === "shared"
-              ? t.detail.shared
-              : shareStatus === "failed"
-                ? t.toast.failed
-                : t.detail.share}
-          </button>
-          <button
-            type="button"
-            onClick={onReset}
-            className="hairline inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[11.5px] text-muted transition-colors hover:bg-white/[0.05] hover:text-ink"
-          >
-            <svg width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden>
-              <path
-                d="M13.2 8a5.2 5.2 0 1 1-1.6-3.7M13.2 2.6v3.2H10"
-                stroke="currentColor"
-                strokeWidth="1.3"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-            {t.detail.reset}
-          </button>
-        </div>
+    <section className={styles.panel} aria-labelledby={`${panelId}-title`}>
+      <div className={styles.header}>
+        <h2 id={`${panelId}-title`}>{t.detail.params}</h2>
+        <button type="button" onClick={onReset} className={styles.reset}>
+          {t.detail.reset}
+        </button>
       </div>
+      <p className={styles.description}>
+        {locale === "zh"
+          ? "边调边看，提示词同步更新。"
+          : "Tune it live. The prompt updates with you."}
+      </p>
 
-      <div className="mt-5 grid gap-x-7 gap-y-5 sm:grid-cols-2">
+      <div className={styles.numbers}>
         {numbers.map((param) => {
           const value = readNumber(params, param.key, param.default);
           const fill =
             ((value - param.min) / (param.max - param.min)) * 100;
           return (
-            <label key={param.key} className="block">
-              <span className="flex items-baseline justify-between">
-                <span className="text-[12px] text-muted">
-                  {param.label[locale]}
-                </span>
-                <span className="font-mono text-[12px] tabular-nums text-ink">
+            <label key={param.key} className={styles.control}>
+              <span className={styles.controlLabel}>
+                <span>{param.label[locale]}</span>
+                <span className={styles.value}>
                   {paramDisplay(param, params)}
-                  <span className="ml-0.5 text-[10px] text-faint">
-                    {param.unit}
-                  </span>
+                  {param.unit && <span className={styles.unit}>{param.unit}</span>}
                 </span>
               </span>
               <input
@@ -128,7 +83,8 @@ export function ParamControls({
                   onChange({ [param.key]: Number(event.target.value) })
                 }
                 aria-label={param.label[locale]}
-                className="mt-2.5"
+                aria-valuetext={`${paramDisplay(param, params)}${param.unit ? ` ${param.unit}` : ""}`}
+                className={styles.slider}
                 style={{ "--fill": `${fill}%` } as CSSProperties}
               />
             </label>
@@ -137,7 +93,7 @@ export function ParamControls({
       </div>
 
       {booleans.length > 0 ? (
-        <div className="mt-5 flex flex-wrap items-center gap-2.5 border-t border-white/[0.06] pt-4">
+        <div className={styles.booleans}>
           {booleans.map((param) => {
             const active = Boolean(params[param.key]);
             return (
@@ -146,17 +102,9 @@ export function ParamControls({
                 type="button"
                 onClick={() => onChange({ [param.key]: !active })}
                 aria-pressed={active}
-                className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-[11.5px] transition-colors ${
-                  active
-                    ? "border-accent/40 bg-accent/10 text-accent"
-                    : "border-line text-faint hover:text-muted"
-                }`}
+                className={styles.toggle}
               >
-                <span
-                  className={`h-1.5 w-1.5 rounded-full ${
-                    active ? "bg-accent" : "bg-faint"
-                  }`}
-                />
+                <span className={styles.toggleDot} aria-hidden="true" />
                 {param.label[locale]}
               </button>
             );
@@ -165,16 +113,35 @@ export function ParamControls({
       ) : null}
 
       {hasCurve ? (
-        <div className="mt-5 border-t border-white/[0.06] pt-5">
-          <SpringCurve
-            stiffness={readNumber(params, "stiffness", 260)}
-            damping={readNumber(params, "damping", 20)}
-            overshootLabel={t.detail.curveOvershoot}
-            settleLabel={t.detail.curveSettle}
-            hint={`${t.detail.curveTitle} · ${t.detail.curveHint}`}
-          />
-        </div>
+        <details className={styles.curve}>
+          <summary>{t.detail.curveTitle}</summary>
+          <div className={styles.curveBody}>
+            <SpringCurve
+              stiffness={readNumber(params, "stiffness", 260)}
+              damping={readNumber(params, "damping", 20)}
+              overshootLabel={t.detail.curveOvershoot}
+              settleLabel={t.detail.curveSettle}
+              hint={t.detail.curveHint}
+            />
+          </div>
+        </details>
       ) : null}
+
+      <div className={styles.footer}>
+        <button
+          type="button"
+          onClick={onShare}
+          aria-live="polite"
+          className={styles.share}
+          data-share-status={shareStatus}
+        >
+          {shareStatus === "shared"
+            ? t.detail.shared
+            : shareStatus === "failed"
+              ? t.toast.failed
+              : t.detail.share}
+        </button>
+      </div>
     </section>
   );
 }

@@ -1,3 +1,4 @@
+import { assembleUniversal } from "../shared/universal-prompt";
 import type { Locale } from "@/lib/i18n";
 import {
   assembleCompact,
@@ -11,6 +12,7 @@ import {
   readNumber,
   type Params,
   type PromptArgs,
+  type PromptStack,
   type Stack,
   type Variant,
 } from "../types";
@@ -56,7 +58,7 @@ function specLines(p: ToastValues, lang: Locale): string[] {
   ];
 }
 
-function behaviorLines(stack: Stack, lang: Locale): string[] {
+function behaviorLines(stack: PromptStack, lang: Locale): string[] {
   const en: string[] = [
     "- Push rules: ignore empty text; ignore text that is already on screen (no duplicate stacks); ignore a push while the stack is full.",
     "- Slots are assigned to the lowest free index. Removing one toast must never reflow the others — existing toasts keep their exact boundingBox while another enters or leaves.",
@@ -76,7 +78,11 @@ function behaviorLines(stack: Stack, lang: Locale): string[] {
     "- `prefers-reduced-motion: reduce`：不播入场动画也不播退场动画——toast 直接以最终态出现，退场时直接消失。",
   ];
   const cleanup =
-    stack === "vanilla"
+    stack === "auto"
+      ? lang === "en"
+        ? "- Use the detected host lifecycle to clear every hold, exit and fallback timer, remove listeners and scoped styles, and stop animations on teardown; a normal exit must finish before its node is removed."
+        : "- 按识别出的宿主生命周期在销毁时清除全部停留、退场与兜底计时器，移除监听和局部样式并停止动画；正常退场必须播放完成后才移除节点。"
+      : stack === "vanilla"
       ? lang === "en"
         ? "- `createToastStack(root, options)` returns `{ push, dismiss, destroy }`; `destroy()` clears every hold / exit timer and any fallback listener."
         : "- `createToastStack(root, options)` 返回 `{ push, dismiss, destroy }`；`destroy()` 清掉所有停留 / 退场定时器与兜底监听。"
@@ -95,12 +101,16 @@ function behaviorLines(stack: Stack, lang: Locale): string[] {
 }
 
 function forbiddenLines(
-  stack: Stack,
+  stack: PromptStack,
   p: ToastValues,
   lang: Locale,
 ): string[] {
   const stackExtra =
-    stack === "vanilla"
+    stack === "auto"
+      ? lang === "en"
+        ? "- Reuse the detected project capabilities or native browser APIs; do not assume or add a framework, styling system or animation dependency."
+        : "- 复用识别出的项目能力或原生浏览器 API；不要假设或新增框架、样式系统或动画依赖。"
+      : stack === "vanilla"
       ? lang === "en"
         ? "- Do not introduce a framework, a build step or an animation library."
         : "- 不要引入框架、构建步骤或动画库。"
@@ -125,7 +135,9 @@ function forbiddenLines(
       "- Do not unmount on a `setTimeout` that guesses the animation length, and do not leave `pointer-events` active during the exit.",
       "- Do not allow duplicate text to stack; do not clear the text before or during the exit.",
       "- No TODOs, no `// rest of the code`, no `any`, no console.log, no commented-out experiments.",
-      "- Do not wrap the component in a page, layout, demo shell or provider; do not touch global CSS, the Tailwind config, package.json or any file other than the one(s) listed above.",
+      stack === "auto"
+        ? "- Do not modify project configuration, global styles or any file outside the minimal change scope determined from the actual project."
+        : "- Do not wrap the component in a page, layout, demo shell or provider; do not touch global CSS, the Tailwind config, package.json or any file other than the one(s) listed above.",
       stackExtra,
     ];
   }
@@ -137,7 +149,9 @@ function forbiddenLines(
     "- 不要用估算动画长度的 `setTimeout` 卸载，退场期间 `pointer-events` 不能还是可点的。",
     "- 不允许同一文案重复堆叠；退场前和退场中都不允许把文案清空。",
     "- 不要留 TODO、不要写 `// 其余代码`、不要用 `any`、不要 console.log、不要留注释掉的实验代码。",
-    "- 不要把组件包进页面、布局、演示壳或 Provider；不要改动全局 CSS、Tailwind 配置、package.json 或上面文件之外的任何文件。",
+    stack === "auto"
+      ? "- 不要修改项目配置、全局样式或实际项目确定的最小改动范围之外的文件。"
+      : "- 不要把组件包进页面、布局、演示壳或 Provider；不要改动全局 CSS、Tailwind 配置、package.json 或上面文件之外的任何文件。",
     stackExtra,
   ];
 }
@@ -180,6 +194,18 @@ export function buildToastPrompt({
   existingSource = "",
 }: PromptArgs): string {
   const p = readValues(params);
+  if (stack === "auto") {
+    return assembleUniversal({
+      effect: spec,
+      params,
+      lang,
+      variant,
+      spec: specLines(p, lang),
+      behavior: behaviorLines("auto", lang),
+      forbidden: forbiddenLines("auto", p, lang),
+      existingSource,
+    });
+  }
   const stackSpec = spec.stacks[stack];
   const context = stackSpec.context[lang];
   const depsLine =

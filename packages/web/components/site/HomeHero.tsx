@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useLocale } from "@/components/providers/Providers";
 import { liveModules } from "@/content/effects/registry";
-import { HeroWorkbench } from "./HeroWorkbench";
 import styles from "./HomeHero.module.css";
 
 export function HomeHero() {
@@ -20,22 +19,24 @@ export function HomeHero() {
           <span>{t.hero.titleAccent}</span>
         </h1>
         <div className={styles.summary}>
-          <p className={styles.lead}>{t.hero.lead}</p>
+          <p className={styles.lead}>
+            {locale === "zh"
+              ? "挑一个喜欢的效果，现场调出手感，再把提示词带到你的 AI 编程工具里。"
+              : "Find an effect you love. Tune it live, then bring the prompt to your AI coding tool."}
+          </p>
           <div className={styles.actions}>
+            <a href="#effects" className={styles.primary}>
+              {locale === "zh" ? "浏览全部效果" : "Browse effects"}
+            </a>
             <Link
               href={`/effects/${liveModules[0]?.spec.slug ?? "magnetic-button"}`}
-              className={styles.primary}
+              className={styles.secondary}
             >
-              {t.hero.ctaPrimary}
+              {locale === "zh" ? "体验一个效果" : "Try an effect"}
             </Link>
-            <a href="#method" className={styles.secondary}>
-              {t.hero.ctaSecondary}
-            </a>
           </div>
         </div>
       </div>
-
-      <HeroWorkbench />
 
       <dl className={styles.facts}>
         <div>

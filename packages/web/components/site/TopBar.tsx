@@ -9,11 +9,11 @@ export function TopBar({ compact = false }: { compact?: boolean }) {
   return (
     <header className="sticky top-0 z-40 border-b border-white/[0.06] bg-void/80 backdrop-blur-xl">
       <div
-        className={`mx-auto flex h-14 items-center justify-between px-5 ${
-          compact ? "max-w-[1400px]" : "max-w-6xl"
+        className={`mx-auto flex h-16 items-center justify-between gap-4 px-5 sm:px-6 ${
+          compact ? "max-w-[1400px]" : "max-w-[1240px]"
         }`}
       >
-        <Link href="/" className="group flex items-center gap-2.5">
+        <Link href="/" className="group flex shrink-0 items-center gap-2.5 rounded-sm">
           <span className="relative grid h-6 w-6 place-items-center rounded-[7px] bg-accent">
             <span className="absolute h-1 w-1 rounded-full bg-[#0A0B08]" />
             <span className="absolute h-1 w-1 translate-x-[5px] translate-y-[5px] rounded-full bg-[#0A0B08]/70" />
@@ -23,26 +23,29 @@ export function TopBar({ compact = false }: { compact?: boolean }) {
             <span className="text-[14px] font-semibold tracking-tight">
               {t.brand}
             </span>
-            <span className="font-mono text-[9.5px] uppercase tracking-[0.16em] text-faint">
+            <span className="hidden font-mono text-[9.5px] uppercase tracking-[0.16em] text-faint min-[400px]:inline">
               {t.brandLatin}
             </span>
           </span>
         </Link>
 
-        <nav className="hidden items-center gap-8 text-[13.5px] font-medium tracking-[0.01em] text-muted sm:flex">
-          <a href="/#method" className="animated-underline hover:text-ink">
-            {t.nav.method}
-          </a>
-          <a href="/#effects" className="animated-underline hover:text-ink">
+        <nav
+          aria-label={locale === "zh" ? "主导航" : "Main navigation"}
+          className="ml-auto flex items-center gap-5 text-[13px] font-medium text-muted sm:absolute sm:left-1/2 sm:ml-0 sm:-translate-x-1/2 sm:gap-8 sm:text-[14px]"
+        >
+          <a href="/#effects" className="animated-underline flex min-h-11 items-center rounded-sm hover:text-ink">
             {t.nav.effects}
+          </a>
+          <a href="/#method" className="animated-underline hidden min-h-11 items-center rounded-sm hover:text-ink sm:flex">
+            {locale === "zh" ? "使用方式" : "How it works"}
           </a>
         </nav>
 
         <button
           type="button"
           onClick={toggleLocale}
-          className="hairline flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 font-mono text-[11px] text-muted transition-colors hover:bg-white/[0.05] hover:text-ink"
-          aria-label="Switch language"
+          className="hairline flex min-h-11 shrink-0 items-center gap-1.5 rounded-lg px-2.5 text-[12px] text-muted transition-colors hover:bg-white/[0.05] hover:text-ink motion-reduce:transition-none"
+          aria-label={locale === "zh" ? "Switch to English" : "切换到中文"}
         >
           <svg width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden>
             <circle cx="8" cy="8" r="6.2" stroke="currentColor" strokeWidth="1.2" />

@@ -1,3 +1,4 @@
+import { assembleUniversal } from "../shared/universal-prompt";
 import type { Locale } from "@/lib/i18n";
 import {
   assembleCompact,
@@ -11,6 +12,7 @@ import {
   readNumber,
   type Params,
   type PromptArgs,
+  type PromptStack,
   type Stack,
   type Variant,
 } from "../types";
@@ -63,7 +65,7 @@ function specLines(p: JellyValues, lang: Locale): string[] {
   ];
 }
 
-function behaviorLines(stack: Stack, p: JellyValues, lang: Locale): string[] {
+function behaviorLines(stack: PromptStack, p: JellyValues, lang: Locale): string[] {
   const en: string[] = [
     `- Text state machine: idle(off) --pointerdown--> pressed; pressed --pointermove |dx| > ${formatNumber(p.dragSlop, 0)}px--> dragging(stretch follows |dx|); pressed --pointerup |dx| <= ${formatNumber(p.dragSlop, 0)}px--> click-toggle; dragging --pointerup--> settle(target from velocity / half travel); dragging --pointercancel / lost capture--> settle(back to the current side); any state --reduced motion--> instant final state.`,
     `- The whole release settles within ${formatNumber(p.duration, 0)}ms (spring visualDuration); the last frame is exactly x = 0 or ${B.track.travel}px with scaleX = scaleY = 1.`,
@@ -81,7 +83,11 @@ function behaviorLines(stack: Stack, p: JellyValues, lang: Locale): string[] {
     "- `prefers-reduced-motion: reduce`：拖动只更新 x、不写 scaleX/scaleY；松手与键盘切换在 ≤1ms 内直接落终态、不跑弹簧，可访问状态仍然更新。",
   ];
   const cleanup =
-    stack === "vanilla"
+    stack === "auto"
+      ? lang === "en"
+        ? "- Use the detected host lifecycle to cancel the spring and pending frames, remove pointer, click, key and animationend listeners, release pointer capture, clear pointer samples and restore temporary styles; nothing may update after teardown."
+        : "- 按识别出的宿主生命周期取消弹簧与未执行的帧，移除指针、点击、键盘和 animationend 监听，释放指针捕获、清空指针样本并还原临时样式；销毁后不要更新状态。"
+      : stack === "vanilla"
       ? lang === "en"
         ? "- `destroy()` cancels the spring rAF loop, removes every pointer / click / keydown listener, releases pointer capture and restores the inline styles it changed."
         : "- `destroy()` 取消弹簧 rAF 循环、移除全部 pointer / click / keydown 监听、释放 pointer capture，并还原它改过的内联样式。"
@@ -96,12 +102,16 @@ function behaviorLines(stack: Stack, p: JellyValues, lang: Locale): string[] {
 }
 
 function forbiddenLines(
-  stack: Stack,
+  stack: PromptStack,
   p: JellyValues,
   lang: Locale,
 ): string[] {
   const stackExtra =
-    stack === "vanilla"
+    stack === "auto"
+      ? lang === "en"
+        ? "- Reuse the detected project capabilities or native browser APIs; do not assume or add a framework, styling system or animation dependency."
+        : "- 复用识别出的项目能力或原生浏览器 API；不要假设或新增框架、样式系统或动画依赖。"
+      : stack === "vanilla"
       ? lang === "en"
         ? "- Do not introduce a framework, a build step or an animation library."
         : "- 不要引入框架、构建步骤或动画库。"
@@ -127,7 +137,9 @@ function forbiddenLines(
       "- Do not use `disabled`, `pointer-events: none` or `dragstart` suppression that makes the control unfocusable.",
       "- Do not add a second animation driver that fights the spring, and do not set `touch-action: none` (vertical scroll must keep working).",
       "- Do not hardcode a duration other than the `duration` prop / documented defaults, and do not leave `any`, TODOs or commented-out experiments.",
-      "- Do not modify package.json, global CSS, the Tailwind config or any other existing file.",
+      stack === "auto"
+        ? "- Do not modify project configuration, global styles or any file outside the minimal change scope determined from the actual project."
+        : "- Do not modify package.json, global CSS, the Tailwind config or any other existing file.",
       ...(p.dragSlop === 0
         ? [
             lang === "en"
@@ -147,7 +159,9 @@ function forbiddenLines(
     "- 不要用 `disabled`、`pointer-events: none` 或屏蔽 dragstart 让控件无法聚焦。",
     "- 不要叠加第二个动画驱动与弹簧抢同一属性；不要设置 `touch-action: none`（纵向滚动必须保留）。",
     "- 除 `duration` 参数与文档默认值外不要硬编码任何时长；不要留 `any`、TODO 或注释掉的实验代码。",
-    "- 不要修改 package.json、全局 CSS、Tailwind 配置或任何其他已有文件。",
+    stack === "auto"
+      ? "- 不要修改项目配置、全局样式或实际项目确定的最小改动范围之外的文件。"
+      : "- 不要修改 package.json、全局 CSS、Tailwind 配置或任何其他已有文件。",
     ...(p.dragSlop === 0
       ? [
           "- dragSlop 为 0：任何位移都必须成为拖动，只有零位移的 pointerdown + pointerup 才算点击。",
@@ -201,6 +215,18 @@ export function buildJellyTogglePrompt({
   existingSource = "",
 }: PromptArgs): string {
   const p = readValues(params);
+  if (stack === "auto") {
+    return assembleUniversal({
+      effect: spec,
+      params,
+      lang,
+      variant,
+      spec: specLines(p, lang),
+      behavior: behaviorLines("auto", p, lang),
+      forbidden: forbiddenLines("auto", p, lang),
+      existingSource,
+    });
+  }
   const stackSpec = spec.stacks[stack];
   const context = stackSpec.context[lang];
   const depsLine =

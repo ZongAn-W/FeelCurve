@@ -15,6 +15,16 @@ npm run dev:web    # http://localhost:3000
 npm run dev:api    # http://localhost:3001
 ```
 
+## 更新服务器网站
+
+保存代码后，在 Windows 上双击根目录的 `update.cmd`，或在项目目录运行：
+
+```powershell
+.\update.cmd
+```
+
+脚本会打包当前保存的代码、上传并在服务器构建，构建成功后切换版本；失败时保留或恢复旧版本。私钥放在 Git 忽略的 `.secrets/_feelcurve-ecs.pem`。运行条件、打包范围和回退步骤见 [部署说明](deploy/README.md)。
+
 ## 数据库
 
 Prisma + SQLite，schema 在 `packages/api/prisma/schema.prisma`。

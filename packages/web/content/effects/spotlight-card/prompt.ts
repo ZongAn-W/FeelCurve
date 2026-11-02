@@ -1,3 +1,4 @@
+import { assembleUniversal } from "../shared/universal-prompt";
 import type { Locale } from "@/lib/i18n";
 import {
   assembleCompact,
@@ -12,6 +13,7 @@ import {
   readNumber,
   type Params,
   type PromptArgs,
+  type PromptStack,
   type Stack,
 } from "../types";
 import { SPOTLIGHT as C, spotlightCardSpec as spec } from "./spec";
@@ -75,9 +77,11 @@ function specLines(p: SpotlightValues, lang: Locale): string[] {
   ];
 }
 
-function behaviorLines(stack: Stack, lang: Locale): string[] {
+function behaviorLines(stack: PromptStack, lang: Locale): string[] {
   const en: string[] = [
-    "- Bind pointer events on the card itself; update the pointer position without React state (motion values or CSS variables).",
+    stack === "auto"
+      ? "- Bind pointer events on the card itself; update the pointer position with mutable values or CSS variables without rerendering the component or updating reactive state every frame."
+      : "- Bind pointer events on the card itself; update the pointer position without React state (motion values or CSS variables).",
     `- pointerenter: fade the spotlight in and spring the scale to ${"the configured scale"}; pointerleave: spring tilt and scale back to rest and fade the spotlight out.`,
     "- Touch: the spotlight follows the touch point, but there is no tilt and no scale.",
     "- Keyboard: the CTA inside the card is a real button/link; focus-visible outline 2px #C9F45A with 3px offset. The card itself does not tilt on focus.",
@@ -86,7 +90,9 @@ function behaviorLines(stack: Stack, lang: Locale): string[] {
     "- Clean up listeners and animations on unmount; no document/window-level listeners; no state updates per frame.",
   ];
   const zh: string[] = [
-    "- 指针事件绑在卡片自身上；指针位置不要走 React state（用 motion value 或 CSS 变量）。",
+    stack === "auto"
+      ? "- 指针事件绑在卡片自身上；指针位置用可变值或 CSS 变量更新，不要逐帧重新渲染组件或更新响应式状态。"
+      : "- 指针事件绑在卡片自身上；指针位置不要走 React state（用 motion value 或 CSS 变量）。",
     "- pointerenter：光斑淡入、缩放到设定值；pointerleave：倾斜与缩放弹回原位、光斑淡出。",
     "- 触屏：光斑跟随触点，但不倾斜、不缩放。",
     "- 键盘：卡片内的 CTA 必须是真实按钮/链接，focus-visible 显示 2px #C9F45A、外扩 3px 的描边；卡片聚焦时不倾斜。",
@@ -94,7 +100,11 @@ function behaviorLines(stack: Stack, lang: Locale): string[] {
     "- 指针快速移动时不能堆积动画或抖动；中途离开卡片必须回到静止状态。",
   ];
   const cleanup =
-    stack === "vanilla"
+    stack === "auto"
+      ? lang === "en"
+        ? "- Use the detected host lifecycle to remove pointer listeners, cancel pending frames and animations, and restore temporary styles; do not update reactive state every frame."
+        : "- 按识别出的宿主生命周期移除指针监听、取消未执行的帧与动画、还原临时样式；不要逐帧触发响应式状态更新。"
+      : stack === "vanilla"
       ? lang === "en"
         ? "- Remove listeners and cancel the animation frame inside `destroy()`."
         : "- 在 `destroy()` 中移除监听并取消动画帧。"
@@ -108,9 +118,13 @@ function behaviorLines(stack: Stack, lang: Locale): string[] {
   return lang === "en" ? [...en, cleanup] : [...zh, cleanup];
 }
 
-function forbiddenLines(stack: Stack, lang: Locale): string[] {
+function forbiddenLines(stack: PromptStack, lang: Locale): string[] {
   const stackExtra =
-    stack === "vanilla"
+    stack === "auto"
+      ? lang === "en"
+        ? "- Reuse the detected project capabilities or native browser APIs; do not assume or add a framework, styling system or animation dependency."
+        : "- 复用识别出的项目能力或原生浏览器 API；不要假设或新增框架、样式系统或动画依赖。"
+      : stack === "vanilla"
       ? lang === "en"
         ? "- Do not introduce a framework, a build step or an animation library."
         : "- 不要引入框架、构建步骤或动画库。"
@@ -133,7 +147,9 @@ function forbiddenLines(stack: Stack, lang: Locale): string[] {
       "- Do not put a CSS transition on transform while the spring is driving it.",
       "- No TODOs, no `// rest of the code`, no `any`, no console.log, no commented-out experiments.",
       "- Do not wrap the component in a page, layout, demo shell or provider.",
-      "- Do not touch global CSS, the Tailwind config or any file other than the one(s) listed above.",
+      stack === "auto"
+        ? "- Do not modify project configuration, global styles or any file outside the minimal change scope determined from the actual project."
+        : "- Do not touch global CSS, the Tailwind config or any file other than the one(s) listed above.",
       stackExtra,
     ];
   }
@@ -143,7 +159,9 @@ function forbiddenLines(stack: Stack, lang: Locale): string[] {
     "- 弹簧驱动 transform 时不要再叠加 CSS transition。",
     "- 不要留 TODO、不要写 `// 其余代码`、不要用 `any`、不要 console.log、不要留注释掉的实验代码。",
     "- 不要把组件包进页面、布局、演示壳或 Provider。",
-    "- 不要改动全局 CSS、Tailwind 配置或上面文件之外的任何文件。",
+    stack === "auto"
+      ? "- 不要修改项目配置、全局样式或实际项目确定的最小改动范围之外的文件。"
+      : "- 不要改动全局 CSS、Tailwind 配置或上面文件之外的任何文件。",
     stackExtra,
   ];
 }
@@ -188,6 +206,18 @@ export function buildSpotlightPrompt({
   existingSource = "",
 }: PromptArgs): string {
   const p = readValues(params);
+  if (stack === "auto") {
+    return assembleUniversal({
+      effect: spec,
+      params,
+      lang,
+      variant,
+      spec: specLines(p, lang),
+      behavior: behaviorLines("auto", lang),
+      forbidden: forbiddenLines("auto", lang),
+      existingSource,
+    });
+  }
   const stackSpec = spec.stacks[stack];
   const context = stackSpec.context[lang];
   const depsLine =

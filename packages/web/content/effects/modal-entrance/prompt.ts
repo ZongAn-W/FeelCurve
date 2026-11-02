@@ -1,3 +1,4 @@
+import { assembleUniversal } from "../shared/universal-prompt";
 import type { Locale } from "@/lib/i18n";
 import {
   assembleCompact,
@@ -11,6 +12,7 @@ import {
   readNumber,
   type Params,
   type PromptArgs,
+  type PromptStack,
   type Stack,
 } from "../types";
 import { MODAL_ENTRANCE as B, modalEntranceSpec as spec } from "./spec";
@@ -36,7 +38,7 @@ function readValues(params: Params): ModalValues {
   };
 }
 
-function specLines(p: ModalValues, lang: Locale): string[] {
+function specLines(p: ModalValues, lang: Locale, universal = false): string[] {
   if (lang === "en") {
     return [
       `- Scrim: covers the nearest positioned ancestor with \`position: absolute; inset: 0\`; background ${B.overlay.background}; opacity 0 → 1 over ${n(p.overlayMs)}ms \`linear\`, no translate and no scale.`,
@@ -44,7 +46,9 @@ function specLines(p: ModalValues, lang: Locale): string[] {
       `- Closing: reverse the exact same properties and use ${n(p.closeMs)}ms for both scrim and panel — always shorter than the open duration.`,
       `- Panel visuals: max-width ${B.panel.width}px, background ${B.panel.background}, 1px border ${B.panel.borderColor}, border-radius ${B.panel.radius}px, padding ${B.panel.padding}px, shadow \`${B.panel.shadow}\`.`,
       `- Scoping: the overlay is absolutely positioned inside a host container — never \`position: fixed\` over the whole page. The demo proves this inside a card.`,
-      "- Focus: on the first open frame focus the panel itself (`tabIndex={-1}`) and start the focus trap immediately; Escape and a scrim click close; focus returns to the element that was focused before opening.",
+      universal
+        ? "- Focus: on the first open frame focus the panel itself (HTML `tabindex=\"-1\"`, expressed using the host syntax) and start the focus trap immediately; Escape and a scrim click close; focus returns to the element that was focused before opening."
+        : "- Focus: on the first open frame focus the panel itself (`tabIndex={-1}`) and start the focus trap immediately; Escape and a scrim click close; focus returns to the element that was focused before opening.",
       "- ARIA: `role=\"dialog\"`, `aria-modal=\"true\"`, `aria-labelledby` pointing at the title and `aria-describedby` pointing at the description (only when those nodes exist).",
       "- `prefers-reduced-motion: reduce`: both durations collapse to ≤1ms and the final state is applied in the same frame; closing unmounts immediately.",
       "- Only `transform` and `opacity` may be animated.",
@@ -56,14 +60,16 @@ function specLines(p: ModalValues, lang: Locale): string[] {
     `- 关闭：完全反向播放同一组属性，遮罩与面板都改用 ${n(p.closeMs)}ms——必须比打开更短。`,
     `- 面板视觉：最大宽度 ${B.panel.width}px，背景 ${B.panel.background}，1px 边框 ${B.panel.borderColor}，圆角 ${B.panel.radius}px，内边距 ${B.panel.padding}px，阴影 \`${B.panel.shadow}\`。`,
     "- 作用域：遮罩绝对定位在宿主容器内部，禁止用 `position: fixed` 覆盖整页；Demo 在卡片里演示这一点。",
-    "- 焦点：打开后的第一帧就把焦点移进面板（面板 `tabIndex={-1}`）并立即启用焦点陷阱；Esc 与点击遮罩关闭；关闭后焦点回到打开前的元素。",
+    universal
+      ? "- 焦点：打开后的第一帧就把焦点移进面板（HTML `tabindex=\"-1\"`，按宿主语法表达）并立即启用焦点陷阱；Esc 与点击遮罩关闭；关闭后焦点回到打开前的元素。"
+      : "- 焦点：打开后的第一帧就把焦点移进面板（面板 `tabIndex={-1}`）并立即启用焦点陷阱；Esc 与点击遮罩关闭；关闭后焦点回到打开前的元素。",
     "- ARIA：`role=\"dialog\"`、`aria-modal=\"true\"`、`aria-labelledby` 指向标题、`aria-describedby` 指向描述（这两个节点存在时）。",
     "- `prefers-reduced-motion: reduce` 时两个时长都压到 ≤1ms，当帧直接到最终态，关闭立即卸载。",
     "- 只允许动画 `transform` 与 `opacity`。",
   ];
 }
 
-function behaviorLines(stack: Stack, lang: Locale): string[] {
+function behaviorLines(stack: PromptStack, lang: Locale): string[] {
   const en: string[] = [
     "- State machine: `closed --open=true--> mounting (closed styles committed; scrim opacity 0, panel opacity 0 / translateY(offset) / scale(scale)) --force reflow--> open (scrim + panel transitions start, focus moves in, trap active) --open=false--> closing (same properties reversed at closeMs) --panel transitionend--> closed (node unmounted, focus restored)`.",
     "- Opening: render the closed state first, read `offsetWidth` once to force a reflow, then switch to the open state so the transition actually runs. Do not skip the reflow.",
@@ -81,7 +87,11 @@ function behaviorLines(stack: Stack, lang: Locale): string[] {
     "- 任何状态下 ARIA 都要成立：`role=\"dialog\"`、`aria-modal=\"true\"`、由标题 labelled、由描述 described。",
   ];
   const cleanup =
-    stack === "vanilla"
+    stack === "auto"
+      ? lang === "en"
+        ? "- Use the detected host lifecycle to remove keyboard, click and transition listeners and cancel pending close callbacks and transitions; no document listener or animation may survive teardown."
+        : "- 按识别出的宿主生命周期移除键盘、点击和过渡监听，取消未完成的关闭回调与过渡；销毁后不要残留 document 监听或动画。"
+      : stack === "vanilla"
       ? lang === "en"
         ? "- Remove every listener (keydown, transitionend, clicks) inside `destroy()`; nothing may keep running after teardown."
         : "- 所有监听（keydown、transitionend、点击）都在 `destroy()` 中移除，销毁后不允许有任何逻辑继续运行。"
@@ -95,9 +105,13 @@ function behaviorLines(stack: Stack, lang: Locale): string[] {
   return lang === "en" ? [...en, cleanup] : [...zh, cleanup];
 }
 
-function forbiddenLines(stack: Stack, lang: Locale): string[] {
+function forbiddenLines(stack: PromptStack, lang: Locale): string[] {
   const stackExtra =
-    stack === "vanilla"
+    stack === "auto"
+      ? lang === "en"
+        ? "- Reuse the detected project capabilities or native browser APIs; do not assume or add a framework, styling system or animation dependency."
+        : "- 复用识别出的项目能力或原生浏览器 API；不要假设或新增框架、样式系统或动画依赖。"
+      : stack === "vanilla"
       ? lang === "en"
         ? "- Do not introduce a framework, a build step or an animation library."
         : "- 不要引入框架、构建步骤或动画库。"
@@ -121,7 +135,9 @@ function forbiddenLines(stack: Stack, lang: Locale): string[] {
       "- Do not animate the overlay with translate/scale or the panel with max-height/top.",
       "- No TODOs, no `// rest of the code`, no `any`, no console.log, no commented-out experiments.",
       "- Do not wrap the component in a page, layout, demo shell or provider; do not make the overlay fixed over the whole document.",
-      "- Do not touch global CSS, the Tailwind config or any file other than the one(s) listed above.",
+      stack === "auto"
+        ? "- Do not modify project configuration, global styles or any file outside the minimal change scope determined from the actual project."
+        : "- Do not touch global CSS, the Tailwind config or any file other than the one(s) listed above.",
       stackExtra,
     ];
   }
@@ -132,7 +148,9 @@ function forbiddenLines(stack: Stack, lang: Locale): string[] {
     "- 遮罩不要做 translate / scale 动画，面板不要用 max-height / top 过渡。",
     "- 不要留 TODO、不要写 `// 其余代码`、不要用 `any`、不要 console.log、不要留注释掉的实验代码。",
     "- 不要把组件包进页面、布局、演示壳或 Provider；不要让遮罩 fixed 覆盖整个文档。",
-    "- 不要改动全局 CSS、Tailwind 配置或上面文件之外的任何文件。",
+    stack === "auto"
+      ? "- 不要修改项目配置、全局样式或实际项目确定的最小改动范围之外的文件。"
+      : "- 不要改动全局 CSS、Tailwind 配置或上面文件之外的任何文件。",
     stackExtra,
   ];
 }
@@ -177,6 +195,18 @@ export function buildModalEntrancePrompt({
   existingSource = "",
 }: PromptArgs): string {
   const p = readValues(params);
+  if (stack === "auto") {
+    return assembleUniversal({
+      effect: spec,
+      params,
+      lang,
+      variant,
+      spec: specLines(p, lang, true),
+      behavior: behaviorLines("auto", lang),
+      forbidden: forbiddenLines("auto", lang),
+      existingSource,
+    });
+  }
   const stackSpec = spec.stacks[stack];
   const context = stackSpec.context[lang];
   const depsLine =

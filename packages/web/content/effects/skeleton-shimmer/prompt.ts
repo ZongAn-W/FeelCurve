@@ -1,3 +1,4 @@
+import { assembleUniversal } from "../shared/universal-prompt";
 import type { Locale } from "@/lib/i18n";
 import {
   assembleCompact,
@@ -11,6 +12,7 @@ import {
   readNumber,
   type Params,
   type PromptArgs,
+  type PromptStack,
   type Stack,
 } from "../types";
 import { SKELETON_SHIMMER as C, skeletonShimmerSpec as spec } from "./spec";
@@ -59,10 +61,12 @@ function specLines(p: SkeletonShimmerValues, lang: Locale): string[] {
   ];
 }
 
-function behaviorLines(stack: Stack, lang: Locale): string[] {
+function behaviorLines(stack: PromptStack, lang: Locale): string[] {
   const en: string[] = [
     "- State machine (text diagram):",
-    '  `loading` (role=status, aria-busy=true) —(data arrives, setLoaded(true))→ `loaded` (unmount the whole skeleton, render the real content in the same boxes)',
+    stack === "auto"
+      ? "  `loading` (role=status, aria-busy=true) —(data arrives and the host loading state resolves)→ `loaded` (unmount the whole skeleton, render the real content in the same boxes)"
+      : '  `loading` (role=status, aria-busy=true) —(data arrives, setLoaded(true))→ `loaded` (unmount the whole skeleton, render the real content in the same boxes)',
     "  `loaded` —(reload)→ `loading` (remount the skeleton; every block's delay counts from 0 again)",
     "  `loading | loaded` —(unmount)→ `teardown` (the injected <style> goes away with the node; no timer or listener is left behind)",
     "  reduced motion: `loading` → `loading-static` (::after animation:none + opacity:0 in ≤1ms; the skeleton stays visible and still)",
@@ -72,7 +76,9 @@ function behaviorLines(stack: Stack, lang: Locale): string[] {
   ];
   const zh: string[] = [
     "- 状态机（文字状态图）：",
-    "  `loading`（role=status, aria-busy=true）—(数据到达，setLoaded(true))→ `loaded`（整棵骨架卸载，真实内容占同样的盒子）",
+    stack === "auto"
+      ? "  `loading`（role=status, aria-busy=true）—(数据到达，宿主加载状态完成)→ `loaded`（整棵骨架卸载，真实内容占同样的盒子）"
+      : "  `loading`（role=status, aria-busy=true）—(数据到达，setLoaded(true))→ `loaded`（整棵骨架卸载，真实内容占同样的盒子）",
     "  `loaded` —(重新加载)→ `loading`（骨架重新挂载，每块 delay 从 0 重新计时）",
     "  `loading | loaded` —(卸载)→ `teardown`（注入的 <style> 随节点移除；不留下计时器或监听）",
     "  reduced-motion：`loading` → `loading-static`（::after 在 ≤1ms 内 animation:none + opacity:0，骨架静态可见）",
@@ -81,7 +87,11 @@ function behaviorLines(stack: Stack, lang: Locale): string[] {
     "- 只允许动画 background-position；整个加载过程中块的 width / height / top / left 与圆角必须保持不变。",
   ];
   const cleanup =
-    stack === "vanilla"
+    stack === "auto"
+      ? lang === "en"
+        ? "- Use the detected host lifecycle to remove the generated skeleton and its scoped styles and stop all animations; restore the container and leave no timers or listeners. Remounting must never stack a second repeating animation."
+        : "- 按识别出的宿主生命周期移除生成的骨架与局部样式并停止全部动画；还原容器，不留下计时器或监听。重新挂载绝不能叠加第二条循环动画。"
+      : stack === "vanilla"
       ? lang === "en"
         ? "- `destroy()` must remove the generated skeleton DOM, the injected <style> and stop every running animation; the container must be left exactly as it was found."
         : "- `destroy()` 必须删除生成的骨架 DOM、注入的 <style> 并停止所有正在跑的动画；容器要恢复成调用前的样子。"
@@ -99,9 +109,13 @@ function behaviorLines(stack: Stack, lang: Locale): string[] {
   return lang === "en" ? [...en, cleanup] : [...zh, cleanup];
 }
 
-function forbiddenLines(stack: Stack, lang: Locale): string[] {
+function forbiddenLines(stack: PromptStack, lang: Locale): string[] {
   const stackExtra =
-    stack === "vanilla"
+    stack === "auto"
+      ? lang === "en"
+        ? "- Reuse the detected project capabilities or native browser APIs; do not assume or add a framework, styling system or animation dependency."
+        : "- 复用识别出的项目能力或原生浏览器 API；不要假设或新增框架、样式系统或动画依赖。"
+      : stack === "vanilla"
       ? lang === "en"
         ? "- Do not introduce a framework, a build step or an animation library."
         : "- 不要引入框架、构建步骤或动画库。"
@@ -123,7 +137,9 @@ function forbiddenLines(stack: Stack, lang: Locale): string[] {
       "- Do not animate width, height, top or left; the skeleton boxes stay fixed while the gradient moves.",
       "- Do not chain `setTimeout` / `setInterval` calls to fake the shimmer — it must be a CSS animation (or the stack's tween engine).",
       "- Do not add dependencies or upgrade the ones already installed.",
-      "- Do not touch global CSS, the Tailwind config or any file other than the one(s) listed above.",
+      stack === "auto"
+        ? "- Do not modify project configuration, global styles or any file outside the minimal change scope determined from the actual project."
+        : "- Do not touch global CSS, the Tailwind config or any file other than the one(s) listed above.",
       "- Do not keep the skeleton mounted after loading finishes and do not fade it out with a fake transition — unmount it.",
       "- No TODOs, no `// rest of the code`, no `any`, no console.log, no commented-out experiments.",
       stackExtra,
@@ -134,7 +150,9 @@ function forbiddenLines(stack: Stack, lang: Locale): string[] {
     "- 不要动画 width / height / top / left；高光移动时骨架块的盒子必须固定。",
     "- 不要用链式 `setTimeout` / `setInterval` 伪造流光——必须是 CSS 动画（或目标栈的补间引擎）。",
     "- 不要新增依赖，也不要升级已安装的依赖。",
-    "- 不要改动全局 CSS、Tailwind 配置或上面文件之外的任何文件。",
+    stack === "auto"
+      ? "- 不要修改项目配置、全局样式或实际项目确定的最小改动范围之外的文件。"
+      : "- 不要改动全局 CSS、Tailwind 配置或上面文件之外的任何文件。",
     "- 加载完成后不要把骨架留在 DOM 里，也不要用假过渡淡出——直接卸载。",
     "- 不要留 TODO、不要写 `// 其余代码`、不要用 `any`、不要 console.log、不要留注释掉的实验代码。",
     stackExtra,
@@ -183,6 +201,18 @@ export function buildSkeletonShimmerPrompt({
   existingSource = "",
 }: PromptArgs): string {
   const p = readValues(params);
+  if (stack === "auto") {
+    return assembleUniversal({
+      effect: spec,
+      params,
+      lang,
+      variant,
+      spec: specLines(p, lang),
+      behavior: behaviorLines("auto", lang),
+      forbidden: forbiddenLines("auto", lang),
+      existingSource,
+    });
+  }
   const stackSpec = spec.stacks[stack];
   const context = stackSpec.context[lang];
   const depsLine =

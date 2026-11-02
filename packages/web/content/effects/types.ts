@@ -6,10 +6,13 @@ export type { Locale };
 export type Localized = Record<Locale, string>;
 
 export type Stack = "react" | "vanilla" | "gsap" | "vue";
+/** Auto adapts to the destination project; it is not a fifth implementation recipe. */
+export type PromptStack = Stack | "auto";
 export type Variant = "full" | "compact" | "retrofit";
 export type PromptLang = Locale;
 
 export const STACKS: Stack[] = ["react", "vanilla", "gsap", "vue"];
+export const PROMPT_STACKS: PromptStack[] = ["auto", ...STACKS];
 export const VARIANTS: Variant[] = ["full", "compact", "retrofit"];
 
 export type NumberParam = {
@@ -83,7 +86,7 @@ export type EffectSpec = {
 
 export type PromptArgs = {
   params: Params;
-  stack: Stack;
+  stack: PromptStack;
   variant: Variant;
   lang: PromptLang;
   /**

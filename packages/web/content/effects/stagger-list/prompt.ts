@@ -1,3 +1,4 @@
+import { assembleUniversal } from "../shared/universal-prompt";
 import type { Locale } from "@/lib/i18n";
 import {
   assembleCompact,
@@ -11,6 +12,7 @@ import {
   readNumber,
   type Params,
   type PromptArgs,
+  type PromptStack,
   type Stack,
   type Variant,
 } from "../types";
@@ -56,7 +58,7 @@ function specLines(p: StaggerValues, lang: Locale): string[] {
   ];
 }
 
-function behaviorLines(stack: Stack, lang: Locale): string[] {
+function behaviorLines(stack: PromptStack, lang: Locale): string[] {
   const en: string[] = [
     "- The entrance is a one-shot: rows carry the animation class while unplayed; when the last row's `animationend` fires, mark it played and remove the animation class. A parent re-render must not restart the entrance.",
     "- Compute delay as `min(index, cap) × stagger` by hand and write it as the row's inline `animation-delay`; never chain `setTimeout` calls to launch rows.",
@@ -72,7 +74,11 @@ function behaviorLines(stack: Stack, lang: Locale): string[] {
     "- 行本身不可交互，保持语义化，不要把整行做成按钮。如果演示需要「重播」按钮，必须是真实 `<button type=\"button\">`，可 Tab 聚焦，Enter / Space 可触发，focus-visible 显示 2px #C9F45A、外扩 3px 的描边。",
   ];
   const cleanup =
-    stack === "vanilla"
+    stack === "auto"
+      ? lang === "en"
+        ? "- Use the detected host lifecycle to stop animations and remove listeners, generated classes, nodes and scoped styles on teardown; leave no timers or per-frame reactive updates. Replay only through a fresh mount as specified."
+        : "- 按识别出的宿主生命周期在销毁时停止动画、移除监听、生成的 class、节点与局部样式；不要留下计时器或逐帧响应式更新。重播仅通过规定的重新挂载完成。"
+      : stack === "vanilla"
       ? lang === "en"
         ? "- `staggerList(list, options)` returns `{ destroy() }`; `destroy()` removes listeners, classes and generated nodes. `replay()` rebuilds the rows — a new mount is the only replay path."
         : "- `staggerList(list, options)` 返回 `{ destroy() }`；`destroy()` 移除监听、class 和生成的节点。`replay()` 重建行——重新挂载是唯一的重播路径。"
@@ -91,12 +97,16 @@ function behaviorLines(stack: Stack, lang: Locale): string[] {
 }
 
 function forbiddenLines(
-  stack: Stack,
+  stack: PromptStack,
   p: StaggerValues,
   lang: Locale,
 ): string[] {
   const stackExtra =
-    stack === "vanilla"
+    stack === "auto"
+      ? lang === "en"
+        ? "- Reuse the detected project capabilities or native browser APIs; do not assume or add a framework, styling system or animation dependency."
+        : "- 复用识别出的项目能力或原生浏览器 API；不要假设或新增框架、样式系统或动画依赖。"
+      : stack === "vanilla"
       ? lang === "en"
         ? "- Do not introduce a framework, a build step or an animation library."
         : "- 不要引入框架、构建步骤或动画库。"
@@ -120,7 +130,9 @@ function forbiddenLines(
       "- Do not launch rows with `setTimeout` chains, and do not drive opacity / translateY frame by frame from JavaScript.",
       "- No TODOs, no `// rest of the code`, no `any`, no console.log, no commented-out experiments.",
       "- Do not wrap the component in a page, layout, demo shell or provider.",
-      "- Do not touch global CSS, the Tailwind config, package.json or any file other than the one(s) listed above.",
+      stack === "auto"
+        ? "- Do not modify project configuration, global styles or any file outside the minimal change scope determined from the actual project."
+        : "- Do not touch global CSS, the Tailwind config, package.json or any file other than the one(s) listed above.",
       stackExtra,
     ];
   }
@@ -131,7 +143,9 @@ function forbiddenLines(
     "- 不要用链式 `setTimeout` 启动行，也不要从 JavaScript 逐帧改 opacity / translateY。",
     "- 不要留 TODO、不要写 `// 其余代码`、不要用 `any`、不要 console.log、不要留注释掉的实验代码。",
     "- 不要把组件包进页面、布局、演示壳或 Provider。",
-    "- 不要改动全局 CSS、Tailwind 配置、package.json 或上面文件之外的任何文件。",
+    stack === "auto"
+      ? "- 不要修改项目配置、全局样式或实际项目确定的最小改动范围之外的文件。"
+      : "- 不要改动全局 CSS、Tailwind 配置、package.json 或上面文件之外的任何文件。",
     stackExtra,
   ];
 }
@@ -174,6 +188,18 @@ export function buildStaggerPrompt({
   existingSource = "",
 }: PromptArgs): string {
   const p = readValues(params);
+  if (stack === "auto") {
+    return assembleUniversal({
+      effect: spec,
+      params,
+      lang,
+      variant,
+      spec: specLines(p, lang),
+      behavior: behaviorLines("auto", lang),
+      forbidden: forbiddenLines("auto", p, lang),
+      existingSource,
+    });
+  }
   const stackSpec = spec.stacks[stack];
   const context = stackSpec.context[lang];
   const depsLine =
