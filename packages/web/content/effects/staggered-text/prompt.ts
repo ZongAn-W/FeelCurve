@@ -1,3 +1,4 @@
+import { assembleUniversal } from "../shared/universal-prompt";
 import type { Locale } from "@/lib/i18n";
 import {
   assembleCompact,
@@ -11,6 +12,7 @@ import {
   readNumber,
   type Params,
   type PromptArgs,
+  type PromptStack,
   type Stack,
 } from "../types";
 import { STAGGERED as C, staggeredTextSpec as spec } from "./spec";
@@ -56,7 +58,7 @@ function specLines(p: StaggeredValues, lang: Locale): string[] {
   ];
 }
 
-function behaviorLines(stack: Stack, lang: Locale): string[] {
+function behaviorLines(stack: PromptStack, lang: Locale): string[] {
   const en: string[] = [
     "- Runs once when mounted (client only); no scroll trigger and no IntersectionObserver.",
     "- The animation must start from the first frame — units declared with the initial state, not flashed at their final state.",
@@ -74,7 +76,11 @@ function behaviorLines(stack: Stack, lang: Locale): string[] {
     "- 零布局位移：段落从第一帧就保持最终的行数与高度，单元动画结束后不能换行。",
   ];
   const cleanup =
-    stack === "vanilla"
+    stack === "auto"
+      ? lang === "en"
+        ? "- Use the detected host lifecycle to cancel animations, clear timers and listeners, and restore original text when tearing down generated text units; never update state after teardown."
+        : "- 按识别出的宿主生命周期取消动画、清除计时器与监听；销毁生成的文字单元时还原原始文本，销毁后不要再更新状态。"
+      : stack === "vanilla"
       ? lang === "en"
         ? "- `destroy()` must restore the original text and leave no timers or listeners behind."
         : "- `destroy()` 必须还原原始文字，且不留下定时器或监听。"
@@ -88,9 +94,13 @@ function behaviorLines(stack: Stack, lang: Locale): string[] {
   return lang === "en" ? [...en, cleanup] : [...zh, cleanup];
 }
 
-function forbiddenLines(stack: Stack, lang: Locale): string[] {
+function forbiddenLines(stack: PromptStack, lang: Locale): string[] {
   const stackExtra =
-    stack === "vanilla"
+    stack === "auto"
+      ? lang === "en"
+        ? "- Reuse the detected project capabilities or native browser APIs; do not assume or add a framework, styling system or animation dependency."
+        : "- 复用识别出的项目能力或原生浏览器 API；不要假设或新增框架、样式系统或动画依赖。"
+      : stack === "vanilla"
       ? lang === "en"
         ? "- Do not introduce a framework, a build step or an animation library."
         : "- 不要引入框架、构建步骤或动画库。"
@@ -112,7 +122,9 @@ function forbiddenLines(stack: Stack, lang: Locale): string[] {
       "- Do not split words in the middle of a Latin word, and do not drop spaces.",
       "- No TODOs, no `// rest of the code`, no `any`, no console.log, no commented-out experiments.",
       "- Do not wrap the component in a page, layout, demo shell or provider.",
-      "- Do not touch global CSS, the Tailwind config or any file other than the one(s) listed above.",
+      stack === "auto"
+        ? "- Do not modify project configuration, global styles or any file outside the minimal change scope determined from the actual project."
+        : "- Do not touch global CSS, the Tailwind config or any file other than the one(s) listed above.",
       stackExtra,
     ];
   }
@@ -121,7 +133,9 @@ function forbiddenLines(stack: Stack, lang: Locale): string[] {
     "- 不要从拉丁单词中间切开，也不要把空格丢掉。",
     "- 不要留 TODO、不要写 `// 其余代码`、不要用 `any`、不要 console.log、不要留注释掉的实验代码。",
     "- 不要把组件包进页面、布局、演示壳或 Provider。",
-    "- 不要改动全局 CSS、Tailwind 配置或上面文件之外的任何文件。",
+    stack === "auto"
+      ? "- 不要修改项目配置、全局样式或实际项目确定的最小改动范围之外的文件。"
+      : "- 不要改动全局 CSS、Tailwind 配置或上面文件之外的任何文件。",
     stackExtra,
   ];
 }
@@ -166,6 +180,18 @@ export function buildStaggeredPrompt({
   existingSource = "",
 }: PromptArgs): string {
   const p = readValues(params);
+  if (stack === "auto") {
+    return assembleUniversal({
+      effect: spec,
+      params,
+      lang,
+      variant,
+      spec: specLines(p, lang),
+      behavior: behaviorLines("auto", lang),
+      forbidden: forbiddenLines("auto", lang),
+      existingSource,
+    });
+  }
   const stackSpec = spec.stacks[stack];
   const context = stackSpec.context[lang];
   const depsLine =

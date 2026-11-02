@@ -1,12 +1,12 @@
 import {
   defaultParams,
   normalizeParams,
-  STACKS,
+  PROMPT_STACKS,
   VARIANTS,
   type EffectSpec,
   type Params,
   type PromptLang,
-  type Stack,
+  type PromptStack,
   type Variant,
 } from "@/content/effects/types";
 
@@ -18,13 +18,13 @@ export const EFFECT_STATE_KEYS = {
 
 export type EffectPageState = {
   params: Params;
-  stack: Stack;
+  stack: PromptStack;
   variant: Variant;
   promptLang: PromptLang;
 };
 
-function isStack(value: string | null): value is Stack {
-  return value !== null && (STACKS as readonly string[]).includes(value);
+function isStack(value: string | null): value is PromptStack {
+  return value !== null && (PROMPT_STACKS as readonly string[]).includes(value);
 }
 
 function isVariant(value: string | null): value is Variant {

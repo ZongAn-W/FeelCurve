@@ -136,3 +136,23 @@ test("sanitizes invalid state values before writing", () => {
   assert.equal(query.get("variant"), "full");
   assert.equal(query.get("lang"), "zh");
 });
+
+test("universal mode survives share URL round trips with parameters and prompt choices", () => {
+  const state: EffectPageState = {
+    params: { ...normalizeParams(magneticButtonSpec, {}), radius: 185, pull: 23, glow: false },
+    stack: "auto",
+    variant: "retrofit",
+    promptLang: "en",
+  };
+  const url = new URL(buildEffectUrl(
+    "https://example.com/effects/magnetic-button?ref=universal#prompt-output",
+    magneticButtonSpec,
+    state,
+  ));
+  assert.equal(url.searchParams.get("stack"), "auto");
+  assert.equal(url.searchParams.get("ref"), "universal");
+  assert.equal(url.hash, "#prompt-output");
+  const restored = readEffectPageState(url.search, magneticButtonSpec, "zh");
+  assert.deepEqual(restored.state, state);
+  assert.equal(restored.explicitPromptLang, true);
+});

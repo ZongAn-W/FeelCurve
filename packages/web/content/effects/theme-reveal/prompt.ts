@@ -1,3 +1,4 @@
+import { assembleUniversal } from "../shared/universal-prompt";
 import type { Locale } from "@/lib/i18n";
 import {
   assembleCompact,
@@ -12,6 +13,7 @@ import {
   readNumber,
   type Params,
   type PromptArgs,
+  type PromptStack,
   type Stack,
 } from "../types";
 import { THEME_REVEAL as C, themeRevealSpec as spec } from "./spec";
@@ -32,7 +34,7 @@ function readValues(params: Params): ThemeRevealValues {
   };
 }
 
-function specLines(values: ThemeRevealValues, lang: Locale): string[] {
+function specLines(values: ThemeRevealValues, lang: Locale, universal = false): string[] {
   const duration = n(values.duration);
   const fadeDuration = n(C.fade.duration);
   const fadeFrom = formatNumber(C.fade.from, 2);
@@ -44,7 +46,9 @@ function specLines(values: ThemeRevealValues, lang: Locale): string[] {
       `- Reveal duration: ${duration}ms, easing \`${C.easing}\`. No other curve, no spring, no bounce, and no second animation running on the same frame.`,
       "- Origin: with `fromClick: true` the circle starts at the click point; a keyboard-activated click has no coordinates, so start from the centre of the button instead. With `fromClick: false` start at the centre of the transition surface.",
       "- Radius: `R = hypot(max(X, W − X), max(Y, H − Y))`, where X/Y is the origin and W/H is the size of the snapshot box (the viewport for `<html>`, the target's rect otherwise). The final circle must reach every corner.",
-      "- Supported path: call `document.startViewTransition(() => { flushSync(() => applyTheme(next)); })`, wait for `transition.ready`, then animate `::view-transition-new(root)` (or `::view-transition-new(<name>)` when a target is passed) with `document.documentElement.animate(..., { duration, easing, pseudoElement })`, from `clip-path: circle(0px at Xpx Ypx)` to `circle(Rpx at Xpx Ypx)`.",
+      universal
+        ? "- Supported path: call `document.startViewTransition` with an update callback that applies the next theme and, when the detected host batches updates, returns a promise that resolves only after the themed DOM has committed. Use the actual host's supported commit mechanism; in a native DOM project write synchronously. After `transition.ready`, animate `::view-transition-new(root)` (or the named target snapshot) with the native Web Animations API and `pseudoElement`, from `clip-path: circle(0px at Xpx Ypx)` to `circle(Rpx at Xpx Ypx)`."
+        : "- Supported path: call `document.startViewTransition(() => { flushSync(() => applyTheme(next)); })`, wait for `transition.ready`, then animate `::view-transition-new(root)` (or `::view-transition-new(<name>)` when a target is passed) with `document.documentElement.animate(..., { duration, easing, pseudoElement })`, from `clip-path: circle(0px at Xpx Ypx)` to `circle(Rpx at Xpx Ypx)`.",
       "- Old frame: add `::view-transition-old(root), ::view-transition-new(root) { animation: none; mix-blend-mode: normal; }` (same pair for the named element). The old page must stay frozen outside the circle — no cross-fade, no scale, no blur.",
       "- Rapid clicks: store the active `ViewTransition`; the next click calls `skipTransition()` before starting a new one. Never run two transitions at the same time.",
       values.fade
@@ -60,7 +64,9 @@ function specLines(values: ThemeRevealValues, lang: Locale): string[] {
     `- 揭示时长：${duration}ms，缓动 \`${C.easing}\`。不许换曲线、不许用弹簧或回弹，也不许在同一帧再跑第二个动画。`,
     "- 起点：`fromClick: true` 时圆从点击位置开始；键盘触发的点击没有坐标，改用按钮中心。`fromClick: false` 时从切换目标（默认整个视口）的中心开始。",
     "- 半径：`R = hypot(max(X, W − X), max(Y, H − Y))`，X/Y 是起点，W/H 是快照盒尺寸（`<html>` 用视口，其它目标用它的 rect）。最终圆必须覆盖每个角。",
-    "- 支持路径：调用 `document.startViewTransition(() => { flushSync(() => applyTheme(next)); })`，等 `transition.ready` 之后用 `document.documentElement.animate(..., { duration, easing, pseudoElement })` 动画 `::view-transition-new(root)`（传入 target 时是 `::view-transition-new(<name>)`），`clip-path` 从 `circle(0px at Xpx Ypx)` 到 `circle(Rpx at Xpx Ypx)`。",
+    universal
+      ? "- 支持路径：调用 `document.startViewTransition`，在更新回调中应用下一个主题；若识别出的宿主会批量更新，则回调返回的 Promise 必须等主题 DOM 提交完成后再解决。使用该宿主实际支持的提交机制；原生 DOM 项目直接同步写入。等待 `transition.ready` 后，用原生 Web Animations API 的 `pseudoElement` 动画 `::view-transition-new(root)`（或命名目标的快照），`clip-path` 从 `circle(0px at Xpx Ypx)` 到 `circle(Rpx at Xpx Ypx)`。"
+      : "- 支持路径：调用 `document.startViewTransition(() => { flushSync(() => applyTheme(next)); })`，等 `transition.ready` 之后用 `document.documentElement.animate(..., { duration, easing, pseudoElement })` 动画 `::view-transition-new(root)`（传入 target 时是 `::view-transition-new(<name>)`），`clip-path` 从 `circle(0px at Xpx Ypx)` 到 `circle(Rpx at Xpx Ypx)`。",
     "- 旧画面：加上 `::view-transition-old(root), ::view-transition-new(root) { animation: none; mix-blend-mode: normal; }`（命名元素同理）。圆之外的旧页面必须完全静止——不许淡出、缩放或模糊。",
     "- 快速连点：保存当前 `ViewTransition`，下一次点击先 `skipTransition()` 再启动新的。任何时刻只允许一个过渡。",
     values.fade
@@ -71,8 +77,12 @@ function specLines(values: ThemeRevealValues, lang: Locale): string[] {
   ];
 }
 
-function behaviorLines(stack: Stack, lang: Locale): string[] {
-  const cleanup: Record<Stack, Record<Locale, string>> = {
+function behaviorLines(stack: PromptStack, lang: Locale): string[] {
+  const cleanup: Record<PromptStack, Record<Locale, string>> = {
+    auto: {
+      en: "- Use the detected host lifecycle to bump the sequence guard, call `skipTransition()`, clear the temporary `view-transition-name`, remove listeners and stop every pending animation; nothing may survive teardown.",
+      zh: "- 按识别出的宿主生命周期递增 sequence 守卫、调用 `skipTransition()`、清掉临时 `view-transition-name`、移除监听并停止未完成的动画；销毁后不要留下任何运行中的工作。",
+    },
     react: {
       en: "- Cleanup in a `useEffect` unmount callback: bump the sequence guard, call `skipTransition()` and clear the temporary inline `view-transition-name`.",
       zh: "- 在 `useEffect` 的卸载回调里清理：递增 sequence 守卫、调用 `skipTransition()`，并清掉临时的行内 `view-transition-name`。",
@@ -115,11 +125,21 @@ function behaviorLines(stack: Stack, lang: Locale): string[] {
 }
 
 function forbiddenLines(
-  stack: Stack,
+  stack: PromptStack,
   values: ThemeRevealValues,
   lang: Locale,
 ): string[] {
-  const stackExtra: Record<Stack, Record<Locale, string[]>> = {
+  const stackExtra: Record<PromptStack, Record<Locale, string[]>> = {
+    auto: {
+      en: [
+        "- Keep the circular reveal on native View Transitions and Web Animations APIs; do not assume or add an animation dependency, framework API or overlay-based substitute.",
+        "- Do not fake the old-frame freeze with repeated component renders or a cloned tree; commit the new themed DOM in the transition update callback using the detected host's actual lifecycle.",
+      ],
+      zh: [
+        "- 圆形揭示使用原生 View Transitions 与 Web Animations API；不要假设或新增动画依赖、框架 API 或遮罩替代实现。",
+        "- 不要用组件反复渲染或克隆树伪造旧画面冻结；按识别出的宿主实际生命周期，在过渡更新回调中提交新主题 DOM。",
+      ],
+    },
     react: {
       en: [
         "- Do not use Motion, Framer Motion, GSAP or any other animation library: View Transitions and the Web Animations API are native.",
@@ -168,7 +188,9 @@ function forbiddenLines(
       "- Do not animate `width`, `height`, `top`, `left`, `margin`, `transform`, `filter` or `box-shadow` on any element; the reveal is `clip-path` only.",
       "- Do not stage the effect with chained `setTimeout` / `setInterval` / `requestAnimationFrame` delays, and never defer the theme write past the transition callback.",
       "- Do not fake the reveal with a fixed overlay, a duplicated DOM tree, an extra element painted over the page, or the cross-document View Transition API.",
-      `- Do not add dependencies, edit \`package.json\`, global CSS or the Tailwind config, and do not persist anything except the theme value (and never write the theme to the whole document when a target is passed).`,
+      stack === "auto"
+        ? "- Do not add dependencies or edit project configuration or global styles; persist only the theme value, and never write the theme to the whole document when a target is passed."
+        : `- Do not add dependencies, edit \`package.json\`, global CSS or the Tailwind config, and do not persist anything except the theme value (and never write the theme to the whole document when a target is passed).`,
       "- No TODO comments, no `any`, no `console.log` left behind, and no value that differs from the SPEC.",
       ...stackExtra[stack].en,
     ];
@@ -179,7 +201,9 @@ function forbiddenLines(
     "- 不要动画任何元素的 `width`、`height`、`top`、`left`、`margin`、`transform`、`filter`、`box-shadow`；揭示只允许用 `clip-path`。",
     "- 不要用链式 `setTimeout` / `setInterval` / `requestAnimationFrame` 拼效果，也不要把主题写入推迟到过渡回调之后。",
     "- 不要用固定遮罩、克隆 DOM、覆盖整个页面的额外元素或跨文档 View Transition API 伪造揭示。",
-    "- 不要新增依赖、不要改 `package.json`、全局 CSS 或 Tailwind 配置；除了主题值外不要持久化任何东西（传入 target 时绝不能写整个文档的主题）。",
+    stack === "auto"
+      ? "- 不要新增依赖、修改项目配置或全局样式；只持久化主题值，传入 target 时绝不能写整个文档的主题。"
+      : "- 不要新增依赖、不要改 `package.json`、全局 CSS 或 Tailwind 配置；除了主题值外不要持久化任何东西（传入 target 时绝不能写整个文档的主题）。",
     "- 不要留 TODO 注释、`any`、`console.log`，也不要出现与规格不一致的数值。",
     ...stackExtra[stack].zh,
   ];
@@ -224,6 +248,18 @@ export function buildThemeRevealPrompt({
   existingSource = "",
 }: PromptArgs): string {
   const values = readValues(params);
+  if (stack === "auto") {
+    return assembleUniversal({
+      effect: spec,
+      params,
+      lang,
+      variant,
+      spec: specLines(values, lang, true),
+      behavior: behaviorLines("auto", lang),
+      forbidden: forbiddenLines("auto", values, lang),
+      existingSource,
+    });
+  }
   const stackSpec = spec.stacks[stack];
   const files = stackSpec.files;
   const depsLine =

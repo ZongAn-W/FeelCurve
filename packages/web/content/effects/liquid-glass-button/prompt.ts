@@ -1,3 +1,4 @@
+import { assembleUniversal } from "../shared/universal-prompt";
 import type { Locale } from "@/lib/i18n";
 import {
   assembleCompact,
@@ -12,6 +13,7 @@ import {
   readNumber,
   type Params,
   type PromptArgs,
+  type PromptStack,
   type Stack,
 } from "../types";
 import { GLASS as C, liquidGlassButtonSpec as spec } from "./spec";
@@ -79,7 +81,7 @@ function specLines(p: GlassValues, lang: Locale): string[] {
   ];
 }
 
-function behaviorLines(stack: Stack, lang: Locale): string[] {
+function behaviorLines(stack: PromptStack, lang: Locale): string[] {
   const en: string[] = [
     "- The component is transparent by design: it must sit directly on the host page's background and reveal it through the glass.",
     "- pointerdown (primary button only): start the press spring toward 1. pointerup, pointercancel and pointerleave all release it toward 0 exactly once; releasing twice must not queue animations.",
@@ -97,7 +99,11 @@ function behaviorLines(stack: Stack, lang: Locale): string[] {
     "- `prefers-reduced-motion: reduce`：不压扁、不上浮、不追踪高光；按钮保持静止但仍能触发 click。",
   ];
   const cleanup =
-    stack === "vanilla"
+    stack === "auto"
+      ? lang === "en"
+        ? "- Use the detected host lifecycle to remove listeners, cancel frames and springs, and restore temporary transforms and custom properties; do not add document/window listeners or update state after teardown."
+        : "- 按识别出的宿主生命周期移除监听、取消动画帧与弹簧、还原临时 transform 和自定义属性；不要新增 document/window 监听，销毁后不要更新状态。"
+      : stack === "vanilla"
       ? lang === "en"
         ? "- `destroy()` must remove every listener (none on document/window), cancel the frame and reset the inline transform / custom properties."
         : "- `destroy()` 必须移除所有监听（不要有 document / window 级监听）、取消动画帧，并还原行内 transform 与自定义属性。"
@@ -111,9 +117,13 @@ function behaviorLines(stack: Stack, lang: Locale): string[] {
   return lang === "en" ? [...en, cleanup] : [...zh, cleanup];
 }
 
-function forbiddenLines(stack: Stack, lang: Locale): string[] {
+function forbiddenLines(stack: PromptStack, lang: Locale): string[] {
   const stackExtra =
-    stack === "vanilla"
+    stack === "auto"
+      ? lang === "en"
+        ? "- Reuse the detected project capabilities or native browser APIs; do not assume or add a framework, styling system or animation dependency."
+        : "- 复用识别出的项目能力或原生浏览器 API；不要假设或新增框架、样式系统或动画依赖。"
+      : stack === "vanilla"
       ? lang === "en"
         ? "- Do not introduce a framework, a build step or an animation library."
         : "- 不要引入框架、构建步骤或动画库。"
@@ -136,7 +146,9 @@ function forbiddenLines(stack: Stack, lang: Locale): string[] {
       "- Do not animate width, height, margin, padding, top or left; the thickness change must come from translating the face only.",
       "- Do not build a wallpaper, pattern picker, demo shell or page around the component.",
       "- No TODOs, no `// rest of the code`, no `any`, no console.log, no commented-out experiments.",
-      "- Do not touch global CSS, the Tailwind config or any file other than the one(s) listed above.",
+      stack === "auto"
+        ? "- Do not modify project configuration, global styles or any file outside the minimal change scope determined from the actual project."
+        : "- Do not touch global CSS, the Tailwind config or any file other than the one(s) listed above.",
       stackExtra,
     ];
   }
@@ -146,7 +158,9 @@ function forbiddenLines(stack: Stack, lang: Locale): string[] {
     "- 不要动画 width / height / margin / padding / top / left；厚度变化只能来自面层的位移。",
     "- 不要在组件外面额外做壁纸、底纹选择器、演示壳或页面。",
     "- 不要留 TODO、不要写 `// 其余代码`、不要用 `any`、不要 console.log、不要留注释掉的实验代码。",
-    "- 不要改动全局 CSS、Tailwind 配置或上面文件之外的任何文件。",
+    stack === "auto"
+      ? "- 不要修改项目配置、全局样式或实际项目确定的最小改动范围之外的文件。"
+      : "- 不要改动全局 CSS、Tailwind 配置或上面文件之外的任何文件。",
     stackExtra,
   ];
 }
@@ -189,6 +203,18 @@ export function buildLiquidGlassPrompt({
   existingSource = "",
 }: PromptArgs): string {
   const p = readValues(params);
+  if (stack === "auto") {
+    return assembleUniversal({
+      effect: spec,
+      params,
+      lang,
+      variant,
+      spec: specLines(p, lang),
+      behavior: behaviorLines("auto", lang),
+      forbidden: forbiddenLines("auto", lang),
+      existingSource,
+    });
+  }
   const stackSpec = spec.stacks[stack];
   const context = stackSpec.context[lang];
   const depsLine =

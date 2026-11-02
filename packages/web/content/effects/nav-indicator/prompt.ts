@@ -1,3 +1,4 @@
+import { assembleUniversal } from "../shared/universal-prompt";
 import type { Locale } from "@/lib/i18n";
 import {
   assembleCompact,
@@ -12,6 +13,7 @@ import {
   readNumber,
   type Params,
   type PromptArgs,
+  type PromptStack,
   type Stack,
 } from "../types";
 import { NAV_INDICATOR as B, navIndicatorSpec as spec } from "./spec";
@@ -32,7 +34,7 @@ function readValues(params: Params): NavValues {
   };
 }
 
-function specLines(p: NavValues, lang: Locale): string[] {
+function specLines(p: NavValues, lang: Locale, universal = false): string[] {
   const glowEn = p.glow
     ? `- Glow: under the bar add \`0 0 ${B.indicator.glowBlurNear}px ${B.indicator.glowNear}, 0 0 ${B.indicator.glowBlurFar}px ${B.indicator.glowFar}\`; it follows the bar and is never animated on its own.`
     : "- Glow: none — do not add a box-shadow.";
@@ -45,7 +47,9 @@ function specLines(p: NavValues, lang: Locale): string[] {
       `- One bar only: a single absolutely positioned element inside the nav container, never one element per tab.`,
       `- Geometry: read the active tab's \`offsetLeft\` and \`offsetWidth\` (same offsetParent as the bar) — no getBoundingClientRect math, no percentage widths.`,
       `- Timing: left and width transition in ${n(p.duration)}ms with ${B.easing.css}. Both properties share the duration; no spring, no keyframes.`,
-      `- First mount: measure in a layout effect and place the bar at its final position immediately — no transition, and no visible jump from \`left: 0\`.`,
+      universal
+        ? "- First mount: measure after the host commits the navigation DOM and before its first visible paint, then place the bar at its final position immediately; no transition and no jump from `left: 0`. Use the lifecycle mechanism supported by the detected host."
+        : `- First mount: measure in a layout effect and place the bar at its final position immediately — no transition, and no visible jump from \`left: 0\`.`,
       `- Settle: after the transition ends, write the final left/width/top into the CSS variables \`--ni-left\` / \`--ni-width\` / \`--ni-top\` and clear inline \`left\`, \`width\` and \`transition\` so the resting position is CSS-driven.`,
       `- Resize: observe the nav container with \`ResizeObserver\` and also listen to \`window\` \`resize\`; either callback re-measures and snaps without animating.`,
       `- Wrapped rows: when the tabs occupy more than one row (distinct \`offsetTop\` values), the next selection change jumps — never slide across rows.`,
@@ -60,7 +64,9 @@ function specLines(p: NavValues, lang: Locale): string[] {
     "- 只有一条指示条：放在导航容器里的唯一一个绝对定位元素，不要给每个标签各画一条。",
     "- 几何：读取激活标签的 `offsetLeft` 与 `offsetWidth`（和指示条同一个 offsetParent），不要用 getBoundingClientRect 手工扣除父级偏移，也不要用百分比宽度。",
     `- 时长：left 与 width 的过渡为 ${n(p.duration)}ms、${B.easing.css}，两个属性共用同一时长；不要弹簧、不要 keyframes。`,
-    "- 首次挂载：在 layout effect 里测量并直接落位，不播放过渡，也不能出现从 `left: 0` 滑过来的闪动。",
+    universal
+      ? "- 首次挂载：在宿主提交导航 DOM 后、首次可见绘制前测量并直接落位；不播放过渡，也不能出现从 `left: 0` 滑过来的闪动。使用识别出的宿主支持的生命周期机制。"
+      : "- 首次挂载：在 layout effect 里测量并直接落位，不播放过渡，也不能出现从 `left: 0` 滑过来的闪动。",
     "- 落定：过渡结束后把最终的 left/width/top 写进 CSS 变量 `--ni-left` / `--ni-width` / `--ni-top`，并清空内联 `left`、`width`、`transition`，静息位置由 CSS 接管。",
     "- 缩放：用 `ResizeObserver` 观察导航容器，同时监听 `window` 的 `resize`；两种回调都重新测量并直接落位，不播放动画。",
     "- 换行：标签分布在多行（`offsetTop` 出现多个值）时，下一次切换直接跳位，不允许横穿两行。",
@@ -71,7 +77,7 @@ function specLines(p: NavValues, lang: Locale): string[] {
   ];
 }
 
-function behaviorLines(stack: Stack, lang: Locale): string[] {
+function behaviorLines(stack: PromptStack, lang: Locale): string[] {
   const en: string[] = [
     "- State machine (text diagram):",
     "  `mount` → measure → `rest` (no transition).",
@@ -97,7 +103,11 @@ function behaviorLines(stack: Stack, lang: Locale): string[] {
     "- 这个动效不涉及任何网络请求，因此也不得引入或改变请求时序。",
   ];
   const cleanup =
-    stack === "vanilla"
+    stack === "auto"
+      ? lang === "en"
+        ? "- Use the detected host lifecycle to disconnect the ResizeObserver, remove window resize and keyboard listeners and cancel pending transitions or frames; no work may survive teardown."
+        : "- 按识别出的宿主生命周期断开 ResizeObserver、移除 window resize 和键盘监听、取消未完成的过渡或帧；销毁后不允许继续运行。"
+      : stack === "vanilla"
       ? lang === "en"
         ? "- Remove every listener, disconnect the ResizeObserver and cancel any pending frame inside `destroy()`; nothing may keep running after teardown."
         : "- 所有监听、ResizeObserver 与未执行的帧都在 `destroy()` 中清理，销毁后不允许有任何逻辑继续运行。"
@@ -111,9 +121,13 @@ function behaviorLines(stack: Stack, lang: Locale): string[] {
   return lang === "en" ? [...en, cleanup] : [...zh, cleanup];
 }
 
-function forbiddenLines(stack: Stack, lang: Locale): string[] {
+function forbiddenLines(stack: PromptStack, lang: Locale): string[] {
   const stackExtra =
-    stack === "vanilla"
+    stack === "auto"
+      ? lang === "en"
+        ? "- Reuse the detected project capabilities or native browser APIs; do not assume or add a framework, styling system or animation dependency."
+        : "- 复用识别出的项目能力或原生浏览器 API；不要假设或新增框架、样式系统或动画依赖。"
+      : stack === "vanilla"
       ? lang === "en"
         ? "- Do not introduce a framework, a build step or an animation library."
         : "- 不要引入框架、构建步骤或动画库。"
@@ -137,7 +151,9 @@ function forbiddenLines(stack: Stack, lang: Locale): string[] {
       "- Do not animate height, top, margin, padding or box-shadow.",
       "- Do not hard-code a bar width, do not fake the movement with a transform on a per-tab element, and do not put the bar outside the nav container.",
       "- No TODOs, no `// rest of the code`, no `any`, no console.log, no commented-out experiments.",
-      "- Do not touch global CSS, the Tailwind config or any file other than the one(s) listed above.",
+      stack === "auto"
+        ? "- Do not modify project configuration, global styles or any file outside the minimal change scope determined from the actual project."
+        : "- Do not touch global CSS, the Tailwind config or any file other than the one(s) listed above.",
       stackExtra,
     ];
   }
@@ -148,7 +164,9 @@ function forbiddenLines(stack: Stack, lang: Locale): string[] {
     "- 不要动画 height、top、margin、padding 或 box-shadow。",
     "- 不要写死指示条宽度，不要用每个标签各自的元素加 transform 来假装滑动，也不要把指示条放到导航容器外面。",
     "- 不要留 TODO、不要写 `// 其余代码`、不要用 `any`、不要用 console.log、不要留注释掉的实验代码。",
-    "- 不要改动全局 CSS、Tailwind 配置或上面文件之外的任何文件。",
+    stack === "auto"
+      ? "- 不要修改项目配置、全局样式或实际项目确定的最小改动范围之外的文件。"
+      : "- 不要改动全局 CSS、Tailwind 配置或上面文件之外的任何文件。",
     stackExtra,
   ];
 }
@@ -197,6 +215,18 @@ export function buildNavIndicatorPrompt({
   existingSource = "",
 }: PromptArgs): string {
   const p = readValues(params);
+  if (stack === "auto") {
+    return assembleUniversal({
+      effect: spec,
+      params,
+      lang,
+      variant,
+      spec: specLines(p, lang, true),
+      behavior: behaviorLines("auto", lang),
+      forbidden: forbiddenLines("auto", lang),
+      existingSource,
+    });
+  }
   const stackSpec = spec.stacks[stack];
   const context = stackSpec.context[lang];
   const depsLine =

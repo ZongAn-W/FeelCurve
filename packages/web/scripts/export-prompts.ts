@@ -3,7 +3,7 @@ import path from "node:path";
 import { promptModules } from "../content/effects/prompt-modules";
 import {
   defaultParams,
-  STACKS,
+  PROMPT_STACKS,
   VARIANTS,
   type PromptLang,
 } from "../content/effects/types";
@@ -53,7 +53,7 @@ async function main() {
     await fs.mkdir(effectDir, { recursive: true });
     const params = defaultParams(spec);
 
-    for (const stack of STACKS) {
+    for (const stack of PROMPT_STACKS) {
       for (const variant of VARIANTS) {
         for (const lang of LANGS) {
           const prompt = buildPrompt({ params, stack, variant, lang });

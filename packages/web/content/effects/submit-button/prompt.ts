@@ -1,3 +1,4 @@
+import { assembleUniversal } from "../shared/universal-prompt";
 import type { Locale } from "@/lib/i18n";
 import {
   assembleCompact,
@@ -12,6 +13,7 @@ import {
   readNumber,
   type Params,
   type PromptArgs,
+  type PromptStack,
   type Stack,
   type Variant,
 } from "../types";
@@ -72,7 +74,7 @@ function specLines(p: SubmitValues, lang: Locale): string[] {
   ];
 }
 
-function behaviorLines(stack: Stack, p: SubmitValues, lang: Locale): string[] {
+function behaviorLines(stack: PromptStack, p: SubmitValues, lang: Locale): string[] {
   const en: string[] = [
     "- The trigger is a real `<button type=\"button\">`; a click (or Enter/Space, which fire click natively) starts the sequence from idle.",
     `- Text state machine: idle --click--> shrinking (${n(p.shrinkMs)}ms) --> loading (${B.timeline.loadingMs}ms) --> success (${n(p.successMs)}ms) --> idle; loading --rejected request--> error (${B.timeline.errorMs}ms) --> idle; idle --reduced motion click--> success (final frame) --> idle; error --reduced motion--> static error (final frame) --> idle.`,
@@ -94,7 +96,11 @@ function behaviorLines(stack: Stack, p: SubmitValues, lang: Locale): string[] {
     "- 键盘与无障碍：focus-visible 描边 2px #C9F45A、外扩 3px；`aria-busy` 跟随加载阶段，`aria-live=\"polite\"` 的状态文本播报加载 / 成功 / 失败；按钮的可访问名称全程不变。",
   ];
   const cleanup =
-    stack === "vanilla"
+    stack === "auto"
+      ? lang === "en"
+        ? "- Use the detected host lifecycle to clear the pending phase timeout and stop the spinner animation; no listener, timer, animation or state update may survive teardown."
+        : "- 按识别出的宿主生命周期清除待执行的阶段计时器并停止加载环动画；销毁后不允许残留监听、计时器、动画或状态更新。"
+      : stack === "vanilla"
       ? lang === "en"
         ? "- Remove every listener and clear the pending timeout inside `destroy()`; nothing may keep running after teardown, and all inline styles on the button must be restored."
         : "- 所有监听都在 `destroy()` 中移除，未触发的 timeout 要清掉；销毁后不允许有任何逻辑继续运行，按钮上的行内样式必须还原。"
@@ -109,12 +115,16 @@ function behaviorLines(stack: Stack, p: SubmitValues, lang: Locale): string[] {
 }
 
 function forbiddenLines(
-  stack: Stack,
+  stack: PromptStack,
   p: SubmitValues,
   lang: Locale,
 ): string[] {
   const stackExtra =
-    stack === "vanilla"
+    stack === "auto"
+      ? lang === "en"
+        ? "- Reuse the detected project capabilities or native browser APIs; do not assume or add a framework, styling system or animation dependency."
+        : "- 复用识别出的项目能力或原生浏览器 API；不要假设或新增框架、样式系统或动画依赖。"
+      : stack === "vanilla"
       ? lang === "en"
         ? "- Do not introduce a framework, a build step or an animation library."
         : "- 不要引入框架、构建步骤或动画库。"
@@ -147,7 +157,9 @@ function forbiddenLines(
       "- Do not change the interaction semantics, the accessible name or the moment the request starts; one click is still one request.",
       "- No TODOs, no `// rest of the code`, no `any`, no console.log, no commented-out experiments.",
       "- Do not wrap the component in a page, layout, demo shell or provider.",
-      "- Do not touch global CSS, the Tailwind config or any file other than the one(s) listed above.",
+      stack === "auto"
+        ? "- Do not modify project configuration, global styles or any file outside the minimal change scope determined from the actual project."
+        : "- Do not touch global CSS, the Tailwind config or any file other than the one(s) listed above.",
       ...(breatheRule ? [breatheRule] : []),
       stackExtra,
     ];
@@ -161,7 +173,9 @@ function forbiddenLines(
     "- 不要改变交互语义、可访问名称或请求发起的时机；一次点击仍然只发一次请求。",
     "- 不要留 TODO、不要写 `// 其余代码`、不要用 `any`、不要 console.log、不要留注释掉的实验代码。",
     "- 不要把组件包进页面、布局、演示壳或 Provider。",
-    "- 不要改动全局 CSS、Tailwind 配置或上面文件之外的任何文件。",
+    stack === "auto"
+      ? "- 不要修改项目配置、全局样式或实际项目确定的最小改动范围之外的文件。"
+      : "- 不要改动全局 CSS、Tailwind 配置或上面文件之外的任何文件。",
     ...(breatheRule ? [breatheRule] : []),
     stackExtra,
   ];
@@ -209,6 +223,18 @@ export function buildSubmitButtonPrompt({
   existingSource = "",
 }: PromptArgs): string {
   const p = readValues(params);
+  if (stack === "auto") {
+    return assembleUniversal({
+      effect: spec,
+      params,
+      lang,
+      variant,
+      spec: specLines(p, lang),
+      behavior: behaviorLines("auto", p, lang),
+      forbidden: forbiddenLines("auto", p, lang),
+      existingSource,
+    });
+  }
   const stackSpec = spec.stacks[stack];
   const context = stackSpec.context[lang];
   const depsLine =
