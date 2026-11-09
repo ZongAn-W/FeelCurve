@@ -1,6 +1,6 @@
 # Ubuntu 服务器部署
 
-当前部署前端展示站，访问地址为 http://47.116.63.161 。后端与数据库暂未启用。
+当前部署前端展示站，访问地址为 https://feelcurve.com（HTTP 自动跳转到 HTTPS）。后端与数据库暂未启用。
 
 ## 一键更新（推荐）
 
@@ -13,7 +13,7 @@ cd D:\_projects\aiprompt
 
 脚本会打包当前已经保存的源码，包含未提交到 Git 的修改；无需先执行提交或推送。它会上传到服务器，在新目录安装依赖并构建，成功后短暂停止旧进程、切换目录，再启动和检查新版本。关闭本机开发服务不会影响这个过程。
 
-构建失败时旧站继续运行；切换、启动、健康检查或保存 PM2 配置失败时会尝试恢复旧版本。全过程不删除文件或目录。成功后，窗口显示 `Deployment complete`，然后打开 http://47.116.63.161 检查页面。
+构建失败时旧站继续运行；切换、启动、健康检查或保存 PM2 配置失败时会尝试恢复旧版本。全过程不删除文件或目录。成功后，窗口显示 `Deployment complete`，然后打开 https://feelcurve.com 检查页面。
 
 - 本地私钥：`.secrets/_feelcurve-ecs.pem`，仅用于 SSH 认证。
 - 本地发布包和记录：`output/deploy/<版本号>/`。
@@ -41,7 +41,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\deploy\update.ps1 -Ser
 
 - 源码：`/opt/feelcurve`
 - PM2 进程：`feelcurve-web`
-- Next.js：`127.0.0.1:3000`，由 Nginx 转发公网 80 端口
+- Next.js：`127.0.0.1:3000`，由 Nginx 转发公网 80/443 端口（443 为 HTTPS，80 仅做跳转）
 - Nginx 配置：`/etc/nginx/conf.d/feelcurve.conf`
 - 运行环境：Node.js 22、npm、PM2、Nginx
 
@@ -77,7 +77,28 @@ cp -n /opt/feelcurve/deploy/feelcurve.nginx.conf /etc/nginx/conf.d/feelcurve.con
 nginx -t && systemctl reload nginx
 ```
 
-若目标配置已存在，应先核对并备份再更新。配置按当前公网 IP 匹配站点；更换 IP 或绑定域名时，同时更新 `server_name`。当前使用 HTTP，HTTPS 需另行配置。
+若目标配置已存在，应先核对并备份再更新。配置按 `feelcurve.com`、`www.feelcurve.com` 和公网 IP 匹配站点；更换 IP 或绑定域名时，同时更新 `server_name`。
+
+模板本身是首次部署用的 HTTP 版本；HTTPS 由 certbot 在此文件基础上自动生成（见下节），线上已启用 TLS 时不要直接用模板覆盖。
+
+## HTTPS
+
+证书由 Let's Encrypt 经 snap 版 certbot 签发。不要安装 apt 版 certbot：Ubuntu 22.04 自带的 1.21 版本会因机器上遗留的旧证书 lineage 报错，且会与 snap 版重复定时续期。
+
+```bash
+snap install --classic certbot
+/snap/bin/certbot --nginx -d feelcurve.com -d www.feelcurve.com \
+  --non-interactive --agree-tos --register-unsafely-without-email --redirect
+```
+
+- 证书与私钥：`/etc/letsencrypt/live/feelcurve.com/`，有效期至 2027-02-07；certbot 会改写 `/etc/nginx/conf.d/feelcurve.conf` 并自动 reload。
+- 自动续期：`snap.certbot.renew.timer` 每天检查两次，无需手工操作；用 `systemctl list-timers | grep certbot` 查看。
+- 80 端口对域名和 IP 都 301 到 `https://feelcurve.com`；`https://47.116.63.161` 会因证书不含 IP 而告警，属预期。安全组需放行 443。
+- 上线后启用了 HSTS（`max-age=31536000`）。
+
+## ICP 备案
+
+站点已通过 ICP 备案（安徽管局、个人主体）。按管局要求，首页页脚需要展示备案号并链接到 https://beian.miit.gov.cn/ 。新增备案号后修改前端页脚，再执行 `update.cmd` 部署。域名未备案时阿里云会拦截访问（403 / `Non-compliance ICP Filing`），不要指望用 IP 或非标准端口绕过。
 
 ## 常用操作
 
@@ -86,7 +107,7 @@ pm2 status
 pm2 logs feelcurve-web --lines 50 --nostream
 pm2 restart feelcurve-web
 systemctl is-enabled pm2-root
-curl -I http://47.116.63.161
+curl -I https://feelcurve.com
 ```
 
 需要停止网站时执行 `pm2 stop feelcurve-web`；停止后再执行 `pm2 save` 可保存停止状态。
@@ -154,7 +175,7 @@ pm2 save &&
 printf 'Update complete. Previous version: %s\n' "$backup"
 ```
 
-记下最后输出的旧版本路径，并打开 http://47.116.63.161 检查页面。PM2 始终使用固定的 `/opt/feelcurve` 路径；不要直接用另一个目录的配置重启并假定 PM2 会切换工作目录。
+记下最后输出的旧版本路径，并打开 https://feelcurve.com 检查页面。PM2 始终使用固定的 `/opt/feelcurve` 路径；不要直接用另一个目录的配置重启并假定 PM2 会切换工作目录。
 
 ### 4. 回退
 
