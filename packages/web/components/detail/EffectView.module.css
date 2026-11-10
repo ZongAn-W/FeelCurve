@@ -205,6 +205,50 @@
   display: none;
 }
 
+.howto {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px 24px;
+  margin-top: 32px;
+  padding-top: 16px;
+  border-top: 1px solid var(--color-line);
+  color: #a5a8af;
+  font-size: 12px;
+  line-height: 1.8;
+}
+
+.howto h2 {
+  color: var(--color-ink);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.howto ol {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 24px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.howto li {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.howtoNumber {
+  color: var(--color-accent);
+  font-variant-numeric: tabular-nums;
+}
+
+.howto strong {
+  color: var(--color-ink);
+  font-weight: 500;
+}
+
 .output {
   margin-top: 32px;
   scroll-margin-top: 184px;
