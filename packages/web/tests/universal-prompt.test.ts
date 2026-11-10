@@ -40,7 +40,7 @@ function universal(
 
 test("universal mode covers every effect, variant and language without fixing the project stack", () => {
   assert.deepEqual(PROMPT_STACKS, ["auto", ...STACKS]);
-  assert.ok(promptModules.length >= 14);
+  assert.ok(promptModules.length >= 15);
   for (const { spec, buildPrompt } of promptModules) {
     for (const lang of LANGS) {
       const prompts = new Map<Variant, string>();

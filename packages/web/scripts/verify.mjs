@@ -268,6 +268,7 @@ try {
     "jelly-toggle",
     "hold-to-delete",
     "animated-number",
+    "digit-roller",
     "skeleton-shimmer",
     "stagger-list",
     "toast-exit",
