@@ -111,6 +111,72 @@ snap install --classic certbot
 - 80 端口对域名和 IP 都 301 到 `https://feelcurve.com`；`https://47.116.63.161` 会因证书不含 IP 而告警，属预期。安全组需放行 443。
 - 上线后启用了 HSTS（`max-age=31536000`）。
 
+## 安全响应头
+
+`snippet` 在 `deploy/security-headers.conf`，只包含响应头，不包含 `server` 块。不要用 `deploy/feelcurve.nginx.conf` 覆盖线上配置：前者是首次部署的 HTTP 模板，线上 443 配置由 certbot 改写并维护。
+
+当前按 A2/A3 的实际配置写域名：Umami Cloud 为 `https://cloud.umami.is`，Sentry 使用标准 ingest 域名 `https://*.ingest.sentry.io` 和 `https://*.ingest.us.sentry.io`。如果改成自托管 Umami 或非标准 Sentry 域名，先替换 snippet 中的域名再加载。
+
+### 安装 snippet
+
+发布后 `deploy/` 已同步到 `/opt/feelcurve/deploy/`，在服务器执行：
+
+```bash
+sudo install -d /etc/nginx/snippets
+sudo install -m 0644 /opt/feelcurve/deploy/security-headers.conf \
+  /etc/nginx/snippets/feelcurve-security-headers.conf
+```
+
+如果还没发布，也可以在本地 PowerShell 执行：
+
+```powershell
+ssh -i .secrets\_feelcurve-ecs.pem root@47.116.63.161 "install -d /etc/nginx/snippets"
+scp -i .secrets\_feelcurve-ecs.pem deploy\security-headers.conf root@47.116.63.161:/etc/nginx/snippets/feelcurve-security-headers.conf
+```
+
+### 引入 HTTPS server
+
+线上配置文件是 `/etc/nginx/conf.d/feelcurve.conf`。先备份：
+
+```bash
+sudo cp /etc/nginx/conf.d/feelcurve.conf /etc/nginx/conf.d/feelcurve.conf.bak-$(date +%F)
+```
+
+然后找到 `listen 443 ssl` 且 `server_name` 包含 `feelcurve.com` 的 **HTTPS server**，在 `server { ... }` 内、`location` 外加入：
+
+```nginx
+include /etc/nginx/snippets/feelcurve-security-headers.conf;
+```
+
+不要：
+
+- 用 `deploy/feelcurve.nginx.conf` 覆盖 `/etc/nginx/conf.d/feelcurve.conf`，否则会丢掉 certbot 的证书和 80→443 跳转配置；
+- 把 include 放进某个 `location` 里；
+- 在 `next.config.ts` 再加一份 CSP 或同名响应头（会出现两个头）；
+- 把 CSP 改成 enforcing，或修改 HSTS、证书、跳转。
+
+`add_header` 的继承规则：如果某个 `location` 自己写了 `add_header`，server 级的这些头不会自动继承到该 location。当前站点的 `location /` 没有自己的 `add_header`；以后若新增，需要把 include 放进该 location 或合并 header。
+
+### 重载并验证
+
+```bash
+sudo nginx -t
+sudo systemctl reload nginx
+curl -sI https://feelcurve.com | grep -iE 'content-security|x-content|referrer|permissions|x-frame'
+```
+
+应看到 5 个响应头，其中 CSP 的名字必须是 `Content-Security-Policy-Report-Only`，不能是 `Content-Security-Policy`。子路径也应带同样的头：
+
+```bash
+curl -sI https://feelcurve.com/effects/magnetic-button | grep -i 'content-security-policy'
+```
+
+### 观察期
+
+先保持 Report-Only 至少 1 周，观察浏览器 Console 的 CSP 报告，以及 Umami/Sentry 请求是否被拦截。当前 header 没有 `report-uri`/`report-to`，不会把报告集中上传；要集中收集需另加端点（本阶段未配置）。
+
+1 周后收紧时优先用 nonce/hash，不要把 `'unsafe-inline'` 长期留在脚本策略里；`'unsafe-eval'` 也应评估移除。先确认 Next.js 内联脚本、`https://cloud.umami.is` 和 Sentry ingest 域名都在策略里，再切换成 enforcing，并保留 Report-Only 版本和回滚步骤。
+
 ## 访问统计（Umami）
 
 统计默认关闭。`packages/web/lib/analytics-config.ts` 中两个常量都为空时，页面不会渲染 Umami 脚本，也不会发出统计请求；清空常量并重新发布即可关闭。
