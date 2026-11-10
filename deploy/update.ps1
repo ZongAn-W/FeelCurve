@@ -9,7 +9,9 @@ param(
 
     [string]$KeyPath,
 
-    [switch]$PackageOnly
+    [switch]$PackageOnly,
+
+    [switch]$SourceBuild
 )
 
 $ErrorActionPreference = 'Stop'
@@ -25,7 +27,10 @@ function Invoke-Native {
 }
 
 function Assert-Archive {
-    param([string]$ArchivePath)
+    param(
+        [string]$ArchivePath,
+        [switch]$Prebuilt
+    )
 
     $entries = @(& tar -tzf $ArchivePath)
     if ($LASTEXITCODE -ne 0) { throw 'Cannot read the source archive.' }
@@ -37,6 +42,12 @@ function Assert-Archive {
         'deploy/ecosystem.config.cjs',
         'deploy/update-server.sh'
     )
+    if ($Prebuilt) {
+        $required += @(
+            'packages/web/.next/BUILD_ID',
+            'packages/web/.next/required-server-files.json'
+        )
+    }
     $normalized = @()
     foreach ($entry in $entries) {
         $name = $entry -replace '^\./', ''
@@ -46,7 +57,19 @@ function Assert-Archive {
         if ($name -notmatch '^((package\.json|package-lock\.json|README\.md|\.gitignore|update\.cmd)$|packages(/|$)|deploy(/|$))') {
             throw "Unexpected archive entry: $name"
         }
-        if ($name -match '(^|/)(node_modules|\.next|\.git|\.secrets|dist)(/|$)|(^|/)\.env|\.(pem|key|pfx|p12|db)(/|$)|\.db-(journal|wal|shm)(/|$)') {
+        if ($name -match '(^|/)\.next(/|$)') {
+            if (-not $Prebuilt) {
+                throw "Excluded .next entry found in archive: $name"
+            }
+            if ($name -notmatch '^packages/web/\.next(/|$)') {
+                throw "Unexpected .next entry: $name"
+            }
+            if ($name -match '^packages/web/\.next/(cache|dev|diagnostics|types|trace|trace-build)(/|$)') {
+                throw "Development .next entry found in archive: $name"
+            }
+        }
+        $isNextVirtualModules = $name -match '^packages/web/\.next/node_modules(/|$)'
+        if (-not $isNextVirtualModules -and $name -match '(^|/)(node_modules|\.git|\.secrets|dist)(/|$)|(^|/)\.env|\.(pem|key|pfx|p12|db)(/|$)|\.db-(journal|wal|shm)(/|$)') {
             throw "Excluded file found in archive: $name"
         }
         $normalized += $name.TrimEnd('/')
@@ -66,7 +89,10 @@ function Assert-Archive {
 
 try {
     Set-Location -LiteralPath $projectRoot
-    foreach ($program in @('tar', 'ssh', 'scp')) {
+    $programs = @('tar')
+    if (-not $SourceBuild) { $programs += 'npm' }
+    if (-not $PackageOnly) { $programs += @('ssh', 'scp') }
+    foreach ($program in $programs) {
         if (-not (Get-Command $program -ErrorAction SilentlyContinue)) {
             throw "Required command not found: $program"
         }
@@ -89,21 +115,51 @@ try {
         throw 'deploy/update-server.sh is missing.'
     }
 
-    Write-Host '[1/4] Packaging the current saved source files (no Git commit required)...'
+    $buildMode = if ($SourceBuild) { 'source' } else { 'prebuilt' }
+    if (-not $SourceBuild) {
+        Write-Host '[1/4] Building the web app locally...'
+        $env:NEXT_TELEMETRY_DISABLED = '1'
+        Invoke-Native -Program 'npm' -Arguments @('run', 'build:web')
+        $buildIdPath = Join-Path $projectRoot 'packages\web\.next\BUILD_ID'
+        if (-not (Test-Path -LiteralPath $buildIdPath -PathType Leaf)) {
+            throw 'Local build did not produce packages/web/.next/BUILD_ID.'
+        }
+        Write-Host 'Local build complete.'
+    }
+    else {
+        Write-Host '[1/4] Packaging source for server-side build...'
+    }
+
+    Write-Host '[2/4] Packaging the release...'
     $tarArguments = @(
         '-czf', $archivePath,
-        '--exclude=node_modules', '--exclude=.next', '--exclude=.git',
+        '--exclude=packages/web/node_modules', '--exclude=packages/api/node_modules',
+        '--exclude=.git',
         '--exclude=.secrets', '--exclude=.env*',
-        '--exclude=dist', '--exclude=*.tsbuildinfo', '--exclude=*.log',
+        '--exclude=packages/api/dist', '--exclude=packages/web/dist',
+        '--exclude=*.tsbuildinfo', '--exclude=*.log',
         '--exclude=*.db', '--exclude=*.db-journal', '--exclude=*.db-wal', '--exclude=*.db-shm',
-        '--exclude=*.pem', '--exclude=*.key', '--exclude=*.pfx', '--exclude=*.p12',
-        'package.json', 'package-lock.json', 'packages', 'deploy'
+        '--exclude=*.pem', '--exclude=*.key', '--exclude=*.pfx', '--exclude=*.p12'
     )
+    if ($SourceBuild) {
+        $tarArguments += '--exclude=.next'
+    }
+    else {
+        $tarArguments += @(
+            '--exclude=packages/web/.next/cache',
+            '--exclude=packages/web/.next/dev',
+            '--exclude=packages/web/.next/diagnostics',
+            '--exclude=packages/web/.next/types',
+            '--exclude=packages/web/.next/trace',
+            '--exclude=packages/web/.next/trace-build'
+        )
+    }
+    $tarArguments += @('package.json', 'package-lock.json', 'packages', 'deploy')
     foreach ($optional in @('README.md', '.gitignore', 'update.cmd')) {
         if (Test-Path -LiteralPath $optional -PathType Leaf) { $tarArguments += $optional }
     }
     Invoke-Native -Program 'tar' -Arguments $tarArguments
-    Assert-Archive -ArchivePath $archivePath
+    Assert-Archive -ArchivePath $archivePath -Prebuilt:(-not $SourceBuild)
     $hashStream = [System.IO.File]::OpenRead($archivePath)
     $hashAlgorithm = [System.Security.Cryptography.SHA256]::Create()
     try {
@@ -120,7 +176,9 @@ try {
         archiveSha256 = $sha256
         archiveBytes = (Get-Item -LiteralPath $archivePath).Length
         server = $Server
+        buildMode = $buildMode
         includesUncommittedSavedFiles = $true
+        includesBuildOutput = (-not $SourceBuild)
     }
     $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
     [System.IO.File]::WriteAllText((Join-Path $outputDir 'release.json'), ($metadata | ConvertTo-Json), $utf8NoBom)
@@ -141,7 +199,7 @@ try {
     )
     $remote = "root@$Server"
     $remoteDir = "/root/feelcurve-uploads/$releaseId"
-    Write-Host '[2/4] Connecting and uploading the release...'
+    Write-Host '[3/4] Uploading the release and switching with automatic rollback...'
     Invoke-Native -Program 'ssh' -Arguments ($sshOptions + @('-p', "$Port", $remote, "umask 077 && install -d -m 700 /root/feelcurve-uploads && mkdir -m 700 '$remoteDir'"))
 
     # Upload an LF-only, BOM-free helper even when Windows checks out CRLF files.
@@ -150,8 +208,7 @@ try {
     [System.IO.File]::WriteAllText($uploadScript, $scriptText, $utf8NoBom)
     Invoke-Native -Program 'scp' -Arguments ($sshOptions + @('-P', "$Port", $archivePath, $uploadScript, "${remote}:$remoteDir/"))
 
-    Write-Host '[3/4] Building on the server, then switching with automatic rollback...'
-    $remoteCommand = "bash '$remoteDir/update-server.sh' '$remoteDir/source.tar.gz' '$releaseId' '$sha256'"
+    $remoteCommand = "bash '$remoteDir/update-server.sh' '$remoteDir/source.tar.gz' '$releaseId' '$sha256' '$buildMode'"
     Invoke-Native -Program 'ssh' -Arguments ($sshOptions + @('-p', "$Port", $remote, $remoteCommand))
 
     Write-Host '[4/4] Deployment complete.'
