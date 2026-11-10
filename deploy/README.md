@@ -11,9 +11,9 @@ cd D:\_projects\aiprompt
 .\update.cmd
 ```
 
-脚本会打包当前已经保存的源码，包含未提交到 Git 的修改；无需先执行提交或推送。它会上传到服务器，在新目录安装依赖并构建，成功后短暂停止旧进程、切换目录，再启动和检查新版本。关闭本机开发服务不会影响这个过程。
+脚本会先在本机执行 `npm run build:web`，再把源码和 `packages/web/.next` 生产产物打包，包含未提交到 Git 的修改；无需先执行提交或推送。服务器只在新目录安装运行时依赖，成功后短暂停止旧进程、切换目录，再启动和检查新版本。这样构建不再占用服务器内存。关闭本机开发服务不会影响这个过程。
 
-构建失败时旧站继续运行；切换、启动、健康检查或保存 PM2 配置失败时会尝试恢复旧版本。全过程不删除文件或目录。成功后，窗口显示 `Deployment complete`，然后打开 https://feelcurve.com 检查页面。
+本地构建失败时不会上传；服务器安装、切换、启动、健康检查或保存 PM2 配置失败时会尝试恢复旧版本。全过程不删除文件或目录。成功后，窗口显示 `Deployment complete`，然后打开 https://feelcurve.com 检查页面。
 
 - 本地私钥：`.secrets/_feelcurve-ecs.pem`，仅用于 SSH 认证。
 - 本地发布包和记录：`output/deploy/<版本号>/`。
@@ -21,13 +21,21 @@ cd D:\_projects\aiprompt
 - 服务器旧版本：`/opt/feelcurve-backup-<版本号>`。
 - 发布失败的目录会保留，清理时按 AGENTS.md 规则手动处理。
 
-打包范围固定为项目的包配置、`packages/`、`deploy/` 和几个根目录文档/入口文件。私钥、`.secrets`、`.env*`、`node_modules`、`.next`、`dist` 和本地数据库会被排除；归档中存在链接时会拒绝上传。服务器再次验证包的 SHA-256、成员路径和文件类型，并使用文件锁阻止同时更新。
+打包范围固定为项目的包配置、`packages/`、`deploy/` 和几个根目录文档/入口文件。本地构建模式会额外包含 `packages/web/.next` 的生产产物，并排除 `.next/cache`、`.next/dev`、`.next/trace` 等开发文件；私钥、`.secrets`、`.env*`、`node_modules`、`dist` 和本地数据库仍会被排除。源码模式（`-SourceBuild`）仍排除 `.next`，由服务器构建。归档中存在链接时会拒绝上传。服务器再次验证包的 SHA-256、成员路径和文件类型，并使用文件锁阻止同时更新。
 
-仅打包并检查，不连接服务器：
+仅在本机构建并检查包，不连接服务器：
 
 ```powershell
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\deploy\update.ps1 -PackageOnly
 ```
+
+默认使用本地构建。如需临时回到服务器构建（应急/旧流程）：
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\deploy\update.ps1 -SourceBuild
+```
+
+服务器只有 2 vCPU / 1.7GiB 内存，不建议在服务器构建；本地构建失败不会上传，也不会影响线上。
 
 更换服务器或私钥路径时：
 
@@ -47,7 +55,14 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\deploy\update.ps1 -Ser
 
 ## 安装和构建
 
-从源码压缩包解压到 `/opt/feelcurve` 后，在服务器执行：
+正常发布由 `update.cmd` 在本机构建，服务器只安装运行时依赖：
+
+```bash
+cd /opt/feelcurve
+npm ci --omit=dev --workspace @feelcurve/web --include-workspace-root
+```
+
+只有在使用 `-SourceBuild` 或手工源码部署时，才在服务器完整构建：
 
 ```bash
 cd /opt/feelcurve
@@ -55,7 +70,7 @@ npm ci --workspace @feelcurve/web --include-workspace-root
 npm run build:web
 ```
 
-不要上传本机的 `node_modules`、`.next`、`.env` 或 `.secrets`。本地私钥仅用于 SSH 连接，保存在 Git 忽略的 `.secrets/` 目录内。
+不要上传本机的 `node_modules`、`.env` 或 `.secrets`。本地构建模式会自动上传 `.next` 的生产产物（不含 `cache`/`dev`）；本地私钥仅用于 SSH 连接，保存在 Git 忽略的 `.secrets/` 目录内。
 
 ## 后台运行
 
@@ -133,6 +148,72 @@ cd D:\_projects\aiprompt
 4. 把两个常量改回空字符串并重新发布，确认不再请求 Umami、Console 无报错。
 
 埋点只发送上述公开元数据；不会发送提示词正文、源码、邮箱，也不会把 IP 放进事件参数。
+
+## 错误上报（Sentry）
+
+默认关闭。`packages/web/lib/telemetry.ts` 里的 `SENTRY_DSN` 为空时，Sentry 的 `enabled` 为 `false`，不会发送上报请求；填入 DSN 并重新发布后启用。
+
+### 创建项目并填入 DSN
+
+1. 登录 https://sentry.io/，新建 Project，平台选 Next.js。
+2. 在 Project Settings → Client Keys (DSN) 复制 DSN。
+3. 填入 `packages/web/lib/telemetry.ts`：
+
+```ts
+export const SENTRY_DSN = "https://<key>@o<orgId>.ingest.sentry.io/<projectId>";
+```
+
+DSN 是公开标识，会出现在浏览器请求里，不是密钥。`SENTRY_AUTH_TOKEN` 是密钥，绝不能写进仓库或提交到 Git。
+
+### 发布
+
+```powershell
+cd D:\_projects\aiprompt
+.\update.cmd
+```
+
+### 验证
+
+Sentry 官方说明：直接在浏览器 DevTools Console 里 throw 的错误可能被沙箱化，不会触发上报。用下面的临时文件在本地验证，验证后删除，不要发布到线上。
+
+1. 浏览器端：临时新增 `packages/web/app/sentry-test/page.tsx`：
+
+```tsx
+"use client";
+
+export default function SentryTestPage() {
+  return (
+    <button
+      type="button"
+      onClick={() => {
+        throw new Error("sentry-browser-test");
+      }}
+    >
+      触发浏览器错误
+    </button>
+  );
+}
+```
+
+运行 `npm run dev --workspace @feelcurve/web`，打开 `http://127.0.0.1:3000/sentry-test`，点击按钮，Sentry Issues 应出现 `sentry-browser-test`。
+
+2. Server 端：临时新增 `packages/web/app/api/sentry-test/route.ts`：
+
+```ts
+export function GET() {
+  throw new Error("sentry-server-test");
+}
+```
+
+访问 `http://127.0.0.1:3000/api/sentry-test`，Sentry Issues 应出现 `sentry-server-test`；该错误由 `instrumentation.ts` 的 `onRequestError` 捕获。
+
+3. 验证完成后删除两个临时文件，再确认 `git status` 不包含它们。
+
+### Source map 与令牌
+
+P0 不上传 source map：`packages/web/next.config.ts` 中已设置 `sourcemaps: { disable: true }`，构建不读取 `SENTRY_AUTH_TOKEN`，没有 token 也不会失败。P1 需要可读堆栈时再配置 Sentry 的 `org`、`project` 和服务器/CI 环境里的 `SENTRY_AUTH_TOKEN`，并去掉该禁用项；令牌只放在部署环境，不进仓库。
+
+错误上报不会主动附加提示词正文或源码；`dataCollection` 已关闭默认用户信息和请求体采集，Session Replay 也未开启。
 
 ## 可用性监控
 

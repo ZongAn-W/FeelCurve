@@ -6,10 +6,12 @@ umask 077
 log() { printf '[FeelCurve] %s\n' "$*"; }
 fail() { printf '[FeelCurve] ERROR: %s\n' "$*" >&2; exit 1; }
 
-[[ $# -eq 3 ]] || fail 'Expected: archive-path release-id sha256'
+[[ $# -eq 3 || $# -eq 4 ]] || fail 'Expected: archive-path release-id sha256 [build-mode]'
 archive=$1
 release_id=$2
 expected_sha=${3,,}
+build_mode=${4:-source}
+[[ $build_mode == source || $build_mode == prebuilt ]] || fail 'Invalid build mode.'
 [[ $release_id =~ ^[A-Za-z0-9][A-Za-z0-9._-]{0,95}$ ]] || fail 'Invalid release ID.'
 [[ $release_id != . && $release_id != .. ]] || fail 'Invalid release ID.'
 [[ $expected_sha =~ ^[a-f0-9]{64}$ ]] || fail 'Invalid SHA-256.'
@@ -135,16 +137,21 @@ actual_sha=$(sha256sum -- "$archive")
 [[ ${actual_sha%% *} == "$expected_sha" ]] || fail 'Upload SHA-256 does not match.'
 
 log 'Checking package and available disk space.'
-python3 - "$archive" "$deploy_root" <<'PY'
+python3 - "$archive" "$deploy_root" "$build_mode" <<'PY'
 import pathlib
 import shutil
 import sys
 import tarfile
 
-archive, root = sys.argv[1:]
+archive, root, build_mode = sys.argv[1:]
 required = {"package.json", "package-lock.json", "packages/web/package.json", "deploy/ecosystem.config.cjs", "deploy/update-server.sh"}
+if build_mode == "prebuilt":
+    required.update({
+        "packages/web/.next/BUILD_ID",
+        "packages/web/.next/required-server-files.json",
+    })
 allowed_roots = {"package.json", "package-lock.json", ".gitignore", "README.md", "update.cmd", "packages", "deploy"}
-forbidden_parts = {".git", ".secrets", "node_modules", ".next", "dist"}
+forbidden_parts = {".git", ".secrets", "dist"}
 seen = set()
 regular_files = set()
 total = 0
@@ -161,8 +168,18 @@ try:
             parts = name.split("/")
             if not name or name.startswith("/") or "\\" in name or ":" in name or any(p in {"", ".", ".."} for p in parts):
                 raise ValueError("Unsafe archive path")
-            if parts[0] not in allowed_roots or any(p in forbidden_parts or p.startswith(".env") for p in parts):
+            is_virtual_next_modules = parts[:4] == ["packages", "web", ".next", "node_modules"]
+            if parts[0] not in allowed_roots or any(p in {".git", ".secrets"} or p.startswith(".env") for p in parts):
                 raise ValueError("Unexpected or private archive entry")
+            if "dist" in parts and not is_virtual_next_modules:
+                raise ValueError("Unexpected dist content in archive")
+            if "node_modules" in parts and not is_virtual_next_modules:
+                raise ValueError("Unexpected node_modules content in archive")
+            if ".next" in parts:
+                if build_mode != "prebuilt" or parts[:3] != ["packages", "web", ".next"]:
+                    raise ValueError("Unexpected .next entry")
+                if len(parts) > 3 and parts[3] in {"cache", "dev", "diagnostics", "types", "trace", "trace-build"}:
+                    raise ValueError("Development .next content is not allowed")
             if pathlib.PurePosixPath(name).suffix.lower() in {".pem", ".key", ".pfx", ".p12", ".db"} or name.lower().endswith((".db-journal", ".db-wal", ".db-shm")):
                 raise ValueError("Private file in archive")
             if not (member.isdir() or member.isfile()):
@@ -184,14 +201,26 @@ except (OSError, tarfile.TarError, ValueError) as error:
     sys.exit(1)
 PY
 
-log "Building new release: $release_id"
+log "Preparing new release: $release_id (mode: $build_mode)"
 mkdir -- "$release"
 tar --extract --gzip --file "$archive" --directory "$release" --no-same-owner --no-same-permissions
-(
-  cd "$release"
-  npm ci --workspace @feelcurve/web --include-workspace-root
-  NEXT_TELEMETRY_DISABLED=1 npm run build:web
-)
+if [[ $build_mode == prebuilt ]]; then
+  [[ -s $release/packages/web/.next/BUILD_ID ]] || fail 'Prebuilt BUILD_ID is missing.'
+  [[ -d $release/packages/web/.next/server ]] || fail 'Prebuilt server output is missing.'
+  [[ -d $release/packages/web/.next/static ]] || fail 'Prebuilt static output is missing.'
+  log 'Installing runtime dependencies for the prebuilt release.'
+  (
+    cd "$release"
+    NEXT_TELEMETRY_DISABLED=1 npm ci --omit=dev --workspace @feelcurve/web --include-workspace-root
+  )
+else
+  log 'Installing dependencies and building on the server.'
+  (
+    cd "$release"
+    npm ci --workspace @feelcurve/web --include-workspace-root
+    NEXT_TELEMETRY_DISABLED=1 npm run build:web
+  )
+fi
 [[ -s $release/packages/web/.next/BUILD_ID ]] || fail 'New build ID is missing.'
 [[ -f $release/deploy/ecosystem.config.cjs ]] || fail 'New PM2 configuration is missing.'
 new_build_id=$(cat "$release/packages/web/.next/BUILD_ID")
@@ -214,7 +243,11 @@ if (!Array.isArray(apps) || apps.length !== 1 ||
 }
 NODE
 
-log 'Build succeeded. Switching the website; a short restart follows.'
+if [[ $build_mode == prebuilt ]]; then
+  log 'Prebuilt release verified. Switching the website; a short restart follows.'
+else
+  log 'Build succeeded. Switching the website; a short restart follows.'
+fi
 switch_started=1
 pm2 stop "$app_name"
 cd "$deploy_root"
