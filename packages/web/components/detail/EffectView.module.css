@@ -307,6 +307,30 @@
   font-weight: 500;
 }
 
+.privacyFooter {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 32px;
+  padding-top: 16px;
+  border-top: 1px solid var(--color-line);
+  font-size: 12px;
+  color: #a5a8af;
+}
+
+.privacyFooter a {
+  display: inline-flex;
+  min-height: 40px;
+  align-items: center;
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: #434952;
+  text-underline-offset: 5px;
+}
+
+.privacyFooter a:hover {
+  color: var(--color-ink);
+}
+
 .mobileCopy {
   display: none;
 }

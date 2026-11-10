@@ -370,6 +370,10 @@ function EffectWorkbench({ module, sourceCode }: { module: EffectModule; sourceC
             </div>
           </details>
         </section>
+
+        <footer className={styles.privacyFooter}>
+          <Link href="/privacy">{locale === "zh" ? "隐私" : "Privacy"}</Link>
+        </footer>
       </main>
 
       <div className={styles.mobileCopy} aria-label={locale === "zh" ? "复制当前提示词" : "Copy current prompt"}>
