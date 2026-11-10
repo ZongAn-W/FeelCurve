@@ -23,7 +23,7 @@ function numberParams(spec: (typeof effectModules)[number]["spec"]) {
 }
 
 test("every registered effect has a complete bilingual spec", () => {
-  assert.ok(effectModules.length >= 14, `only ${effectModules.length} effects`);
+  assert.ok(effectModules.length >= 15, `only ${effectModules.length} effects`);
 
   const slugs = new Set<string>();
   for (const module of effectModules) {

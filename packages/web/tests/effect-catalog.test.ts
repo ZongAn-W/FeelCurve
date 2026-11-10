@@ -20,12 +20,12 @@ test("the catalog groups every live effect once under a useful browsing category
       "jelly-toggle",
       "hold-to-delete",
     ],
-    text: ["staggered-text", "animated-number"],
+    text: ["staggered-text", "animated-number", "digit-roller"],
     feedback: ["skeleton-shimmer", "stagger-list", "toast-exit"],
     layout: ["spotlight-card", "nav-indicator", "modal-entrance", "theme-reveal"],
   };
 
-  assert.equal(liveModules.length, 14);
+  assert.equal(liveModules.length, 15);
   assert.deepEqual(
     effectGroups.map(({ id }) => id),
     ["all", "buttons", "text", "feedback", "layout"],
@@ -58,6 +58,9 @@ test("search finds Chinese and English names, slugs, and implementation tags", (
   }
   assert.deepEqual(slugs(filterEffectModules(liveModules, "raf", "all")), [
     "animated-number",
+  ]);
+  assert.deepEqual(slugs(filterEffectModules(liveModules, "滚轴", "all")), [
+    "digit-roller",
   ]);
 });
 

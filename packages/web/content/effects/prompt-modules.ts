@@ -1,5 +1,7 @@
 import { buildAnimatedNumberPrompt } from "./animated-number/prompt";
 import { animatedNumberSpec } from "./animated-number/spec";
+import { buildDigitRollerPrompt } from "./digit-roller/prompt";
+import { digitRollerSpec } from "./digit-roller/spec";
 import { buildHoldToDeletePrompt } from "./hold-to-delete/prompt";
 import { holdToDeleteSpec } from "./hold-to-delete/spec";
 import { buildJellyTogglePrompt } from "./jelly-toggle/prompt";
@@ -47,6 +49,7 @@ export const promptModules: PromptModule[] = [
   { spec: jellyToggleSpec, buildPrompt: buildJellyTogglePrompt },
   { spec: holdToDeleteSpec, buildPrompt: buildHoldToDeletePrompt },
   { spec: animatedNumberSpec, buildPrompt: buildAnimatedNumberPrompt },
+  { spec: digitRollerSpec, buildPrompt: buildDigitRollerPrompt },
   { spec: skeletonShimmerSpec, buildPrompt: buildSkeletonShimmerPrompt },
   { spec: staggerListSpec, buildPrompt: buildStaggerPrompt },
   { spec: toastExitSpec, buildPrompt: buildToastPrompt },

@@ -52,6 +52,7 @@ const stageStyles: Record<string, string> = {
   "jelly-toggle": styles.stagePlum,
   "hold-to-delete": styles.stageWarm,
   "animated-number": styles.stageTeal,
+  "digit-roller": styles.stageGraphite,
 };
 
 const groupCounts = Object.fromEntries(
