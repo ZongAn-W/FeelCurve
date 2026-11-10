@@ -29,3 +29,9 @@ npm run dev:api    # http://localhost:3001
 
 Prisma + SQLite，schema 在 `packages/api/prisma/schema.prisma`。
 `DATABASE_URL` 走环境变量，默认 `file:./dev.db`，上服务器时改成文件绝对路径或换 Postgres 均可。
+
+## 许可
+
+- 代码：MIT，见 [LICENSE](LICENSE)。
+- 提示词、文案和文档内容：CC BY 4.0，见 [LICENSE-CONTENT](LICENSE-CONTENT)。
+- 最终许可证由项目所有者确认。如果希望限制商用，可以把内容许可改为 CC BY-NC 4.0；修改前请确认它符合你的分发方式。
