@@ -4,111 +4,167 @@
   padding: 20px 24px 64px;
 }
 
-.intro {
-  padding-bottom: 24px;
-}
-
-.back {
-  display: inline-flex;
-  min-height: 40px;
+.crumbs {
+  display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  border-radius: 4px;
-  color: #a5a8af;
-  font-size: 13px;
-  text-decoration: underline;
-  text-decoration-color: #434952;
-  text-underline-offset: 5px;
+  gap: 8px;
+  margin-bottom: 20px;
+  color: #8d949e;
+  font-size: 12px;
 }
 
-.back:hover {
+.crumbs a {
+  display: inline-flex;
+  min-height: 32px;
+  align-items: center;
+  color: #a5a8af;
+}
+
+.crumbs a:hover {
   color: var(--color-ink);
 }
 
-.titleRow {
-  display: flex;
-  align-items: baseline;
-  flex-wrap: wrap;
-  gap: 8px 16px;
-  margin-top: 12px;
+.crumbs span[aria-current] {
+  color: #d4d7dc;
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: 320px minmax(0, 1fr) 300px;
+  align-items: start;
+  gap: 24px;
+}
+
+.rail {
+  position: sticky;
+  top: 88px;
+  min-width: 0;
+  padding-top: 4px;
 }
 
 .titleRow h1 {
   font-family: var(--font-feelcurve-display), var(--font-sans);
-  font-size: clamp(30px, 3.2vw, 42px);
+  font-size: clamp(32px, 3vw, 40px);
   font-weight: 500;
-  line-height: 1.25;
-  letter-spacing: -0.025em;
+  line-height: 1.15;
+  letter-spacing: -0.03em;
   text-wrap: balance;
 }
 
-.titleRow > span {
-  color: #a5a8af;
+.altName {
+  display: block;
+  margin-top: 6px;
+  color: #8b919b;
+  font-size: 13px;
+}
+
+.tagline {
+  margin-top: 14px;
+  color: #b0b5bd;
   font-size: 14px;
+  line-height: 1.75;
 }
 
-.description {
-  max-width: 70ch;
-  margin-top: 12px;
-  color: #a5a8af;
-  font-size: 14px;
-  line-height: 1.8;
-}
-
-.toolbar {
-  position: sticky;
-  top: 64px;
-  z-index: 30;
+.meta {
   display: grid;
-  grid-template-columns: minmax(220px, 1fr) 160px 124px auto;
-  align-items: end;
-  gap: 16px;
-  padding-block: 12px 16px;
-  border-block: 1px solid var(--color-line);
-  background: var(--color-void);
-}
-
-.toolbar label {
-  display: grid;
-  min-width: 0;
   gap: 8px;
-  color: #a5a8af;
+  margin-top: 22px;
+  padding-top: 16px;
+  border-top: 1px solid var(--color-line);
+}
+
+.meta > div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.meta dt {
+  color: #8d949e;
   font-size: 12px;
 }
 
-.toolbar select {
-  min-width: 0;
+.meta dd {
+  color: #e6e8ec;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.meta .verified {
+  color: var(--color-accent);
+}
+
+.actions {
+  display: grid;
+  gap: 8px;
+  margin-top: 20px;
+}
+
+.actions .copyButton {
   width: 100%;
-  height: 44px;
-  padding: 0 28px 0 12px;
+  min-height: 44px;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+.promptLink {
+  display: inline-flex;
+  min-height: 36px;
+  align-items: center;
+  gap: 6px;
+  color: #a5a8af;
+  font-size: 12.5px;
+}
+
+.promptLink:hover {
+  color: var(--color-ink);
+}
+
+.controls {
+  display: grid;
+  gap: 10px;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--color-line);
+}
+
+.controlField {
+  display: grid;
+  min-width: 0;
+  gap: 6px;
+  color: #8d949e;
+  font-size: 11.5px;
+}
+
+.controlField select {
+  width: 100%;
+  height: 40px;
+  padding: 0 28px 0 10px;
   border: 1px solid #353a43;
   border-radius: 8px;
   background: var(--color-surface);
   color: var(--color-ink);
   font: inherit;
-  font-size: 13px;
+  font-size: 12.5px;
   cursor: pointer;
 }
 
-.toolbar select:hover {
+.controlField select:hover {
   border-color: #69727d;
-}
-
-.desktopCopy .copyButton,
-.mobileCopy .copyButton {
-  min-height: 44px;
-  border-radius: 8px;
-  font-size: 14px;
 }
 
 .selectionHint {
   display: flex;
   align-items: baseline;
   flex-wrap: wrap;
-  gap: 8px 16px;
-  margin-block: 12px 20px;
-  color: #a5a8af;
-  font-size: 12px;
-  line-height: 1.8;
+  gap: 6px 12px;
+  margin-top: 14px;
+  color: #8d949e;
+  font-size: 11.5px;
+  line-height: 1.7;
 }
 
 .selectionHint a {
@@ -133,20 +189,17 @@
   color: #ddfa9d;
 }
 
-.workbench {
-  display: grid;
-  grid-template-columns: minmax(0, 2fr) minmax(320px, 1fr);
-  align-items: start;
-  gap: 24px;
+.params {
+  min-width: 0;
 }
 
 .preview {
   position: sticky;
-  top: 184px;
+  top: 88px;
   min-width: 0;
   overflow: hidden;
   border: 1px solid #303640;
-  border-radius: 14px;
+  border-radius: 16px;
   background: var(--color-surface);
 }
 
@@ -351,32 +404,29 @@
   font-weight: 500;
 }
 
-.privacyFooter {
-  display: flex;
-  justify-content: flex-end;
-  margin-top: 32px;
-  padding-top: 16px;
-  border-top: 1px solid var(--color-line);
-  font-size: 12px;
-  color: #a5a8af;
-}
-
-.privacyFooter a {
-  display: inline-flex;
-  min-height: 40px;
-  align-items: center;
-  color: inherit;
-  text-decoration: underline;
-  text-decoration-color: #434952;
-  text-underline-offset: 5px;
-}
-
-.privacyFooter a:hover {
-  color: var(--color-ink);
-}
-
 .mobileCopy {
   display: none;
+}
+
+.footerSlot {
+  padding-bottom: 0;
+}
+
+@media (max-width: 900px) {
+  .footerSlot {
+    padding-bottom: calc(88px + env(safe-area-inset-bottom));
+  }
+}
+
+@media (max-width: 1180px) {
+  .layout {
+    grid-template-columns: 300px minmax(0, 1fr);
+  }
+
+  .preview,
+  .params {
+    grid-column: 2;
+  }
 }
 
 @media (max-width: 900px) {
@@ -384,28 +434,44 @@
     padding: 16px 20px calc(120px + env(safe-area-inset-bottom));
   }
 
-  .intro {
-    padding-bottom: 20px;
+  .crumbs {
+    margin-bottom: 14px;
   }
 
-  .toolbar {
+  .layout {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 20px;
+  }
+
+  .rail,
+  .preview,
+  .params {
+    grid-column: 1;
+  }
+
+  .rail {
     position: static;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    gap: 12px;
-    padding-block: 16px;
   }
 
-  .stackSelect {
+  .titleRow h1 {
+    font-size: 32px;
+  }
+
+  .meta {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px 16px;
+  }
+
+  .controls {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .controlField:first-child {
     grid-column: 1 / -1;
   }
 
-  .desktopCopy {
+  .actions .copyButton {
     display: none;
-  }
-
-  .workbench {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 20px;
   }
 
   .preview {

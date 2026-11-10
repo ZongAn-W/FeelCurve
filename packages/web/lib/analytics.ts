@@ -2,6 +2,7 @@ export type AnalyticsProps = Record<string, string | number | boolean>;
 
 export type CopySurface =
   | "hero"
+  | "library_card"
   | "effect_desktop"
   | "effect_mobile"
   | "prompt_panel";
