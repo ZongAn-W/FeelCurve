@@ -3,5 +3,7 @@
 // 公开站点地址；SEO 常量，不走环境变量，末尾不带斜杠。
 export const SITE_URL = "https://feelcurve.com";
 
+export const SITE_NAME = "FeelCurve";
+
 export const ICP_LICENSE = "皖ICP备2026040127号";
 export const ICP_LICENSE_URL = "https://beian.miit.gov.cn/";

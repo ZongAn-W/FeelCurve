@@ -8,6 +8,7 @@ import { PromptPanel } from "@/components/detail/PromptPanel";
 import { CopyButton } from "@/components/ui/CopyButton";
 import styles from "./EffectView.module.css";
 import { TopBar } from "@/components/site/TopBar";
+import { SiteFooter } from "@/components/site/SiteFooter";
 import { getEffectModule } from "@/content/effects/registry";
 import {
   defaultParams,
@@ -194,6 +195,7 @@ function EffectWorkbench({ module, sourceCode }: { module: EffectModule; sourceC
     CATEGORY_LABELS[spec.category]?.[locale] ?? spec.category.toUpperCase();
   const verified = spec.verified.status === "verified";
   const stackLabel = stack === "auto" ? t.detail.autoStack : spec.stacks[stack].label;
+  const otherName = spec.name[locale === "zh" ? "en" : "zh"];
 
   const variantLabels = locale === "zh"
     ? { full: "完整版", compact: "精简版", retrofit: "改造版" }
@@ -219,63 +221,117 @@ function EffectWorkbench({ module, sourceCode }: { module: EffectModule; sourceC
     <div className="min-h-screen">
       <TopBar compact />
       <main className={styles.main}>
-        <header className={styles.intro}>
-          <Link href="/#effects" className={styles.back}>{t.detail.back}</Link>
-          <div className={styles.titleRow}>
-            <h1>{spec.name[locale]}</h1>
-            <span>{spec.name[locale === "zh" ? "en" : "zh"]}</span>
-          </div>
-          <p className={styles.description}>{spec.tagline[locale]}</p>
-        </header>
+        <nav className={styles.crumbs} aria-label={locale === "zh" ? "面包屑" : "Breadcrumb"}>
+          <Link href="/#effects">{t.effects.label}</Link>
+          <span aria-hidden>/</span>
+          <span>{categoryLabel}</span>
+          <span aria-hidden>/</span>
+          <span aria-current="page">{spec.name[locale]}</span>
+        </nav>
 
-        <div className={styles.toolbar} aria-label={locale === "zh" ? "提示词设置" : "Prompt settings"}>
-          <label className={styles.stackSelect}>
-            <span>{t.detail.stack}</span>
-            <select ref={stackSelectRef} value={stack} onChange={(event) => handleStackChange(event.target.value as PromptStack)}>
-              <option value="auto">{t.detail.autoStack}</option>
-              {STACKS.map((item) => <option key={item} value={item}>{spec.stacks[item].label}</option>)}
-            </select>
-          </label>
-          <label>
-            <span>{t.detail.variant}</span>
-            <select value={variant} onChange={(event) => handleVariantChange(event.target.value as Variant)}>
-              {VARIANTS.map((item) => <option key={item} value={item}>{variantLabels[item]}</option>)}
-            </select>
-          </label>
-          <label>
-            <span>{t.detail.promptLang}</span>
-            <select value={promptLang} onChange={(event) => handlePromptLangChange(event.target.value as PromptLang)}>
-              <option value="zh">中文</option>
-              <option value="en">English</option>
-            </select>
-          </label>
-          <div className={styles.desktopCopy}>
-            {renderCopyAction("effect_desktop")}
-          </div>
-        </div>
+        <div className={styles.layout}>
+          <aside className={styles.rail}>
+            <div className={styles.titleRow}>
+              <h1>{spec.name[locale]}</h1>
+              <span className={styles.altName}>{otherName}</span>
+            </div>
+            <p className={styles.tagline}>{spec.tagline[locale]}</p>
 
-        <p className={styles.selectionHint}>
-          {stack === "auto" ? <span>{t.detail.autoStackHint}</span> : (
-            <button
-              type="button"
-              className={styles.autoStackAction}
-              onClick={() => {
-                handleStackChange("auto");
-                stackSelectRef.current?.focus();
-              }}
+            <dl className={styles.meta}>
+              <div>
+                <dt>{locale === "zh" ? "分类" : "Category"}</dt>
+                <dd>{categoryLabel}</dd>
+              </div>
+              <div>
+                <dt>{locale === "zh" ? "技术栈" : "Stacks"}</dt>
+                <dd>{STACKS.length}</dd>
+              </div>
+              <div>
+                <dt>{locale === "zh" ? "参数" : "Params"}</dt>
+                <dd>{spec.params.length}</dd>
+              </div>
+              <div>
+                <dt>{locale === "zh" ? "状态" : "Status"}</dt>
+                <dd className={verified ? styles.verified : undefined}>
+                  {verified ? t.detail.verifiedDone : t.detail.verifiedPending}
+                </dd>
+              </div>
+            </dl>
+
+            <div className={styles.actions}>
+              {renderCopyAction("effect_desktop")}
+              <a
+                href="#prompt-output"
+                className={styles.promptLink}
+                onClick={() => setOutputTab("prompt")}
+              >
+                {locale === "zh" ? "查看提示词" : "View prompt"}
+                <span aria-hidden>↓</span>
+              </a>
+            </div>
+
+            <div
+              className={styles.controls}
+              aria-label={locale === "zh" ? "提示词设置" : "Prompt settings"}
             >
-              {t.detail.useAutoStack}
-            </button>
-          )}
-          {t.detail.variantHints[variant]}
-          {variant === "retrofit" && (
-            <a href="#prompt-output" onClick={() => setOutputTab("prompt")}>
-              {locale === "zh" ? "附加现有组件" : "Attach your component"}
-            </a>
-          )}
-        </p>
+              <label className={styles.controlField}>
+                <span>{t.detail.stack}</span>
+                <select
+                  ref={stackSelectRef}
+                  value={stack}
+                  onChange={(event) => handleStackChange(event.target.value as PromptStack)}
+                >
+                  <option value="auto">{t.detail.autoStack}</option>
+                  {STACKS.map((item) => (
+                    <option key={item} value={item}>{spec.stacks[item].label}</option>
+                  ))}
+                </select>
+              </label>
+              <label className={styles.controlField}>
+                <span>{t.detail.variant}</span>
+                <select
+                  value={variant}
+                  onChange={(event) => handleVariantChange(event.target.value as Variant)}
+                >
+                  {VARIANTS.map((item) => (
+                    <option key={item} value={item}>{variantLabels[item]}</option>
+                  ))}
+                </select>
+              </label>
+              <label className={styles.controlField}>
+                <span>{t.detail.promptLang}</span>
+                <select
+                  value={promptLang}
+                  onChange={(event) => handlePromptLangChange(event.target.value as PromptLang)}
+                >
+                  <option value="zh">中文</option>
+                  <option value="en">English</option>
+                </select>
+              </label>
+            </div>
 
-        <div className={styles.workbench}>
+            <p className={styles.selectionHint}>
+              {stack === "auto" ? <span>{t.detail.autoStackHint}</span> : (
+                <button
+                  type="button"
+                  className={styles.autoStackAction}
+                  onClick={() => {
+                    handleStackChange("auto");
+                    stackSelectRef.current?.focus();
+                  }}
+                >
+                  {t.detail.useAutoStack}
+                </button>
+              )}
+              {t.detail.variantHints[variant]}
+              {variant === "retrofit" && (
+                <a href="#prompt-output" onClick={() => setOutputTab("prompt")}>
+                  {locale === "zh" ? "附加现有组件" : "Attach your component"}
+                </a>
+              )}
+            </p>
+          </aside>
+
           <section className={styles.preview} aria-labelledby="preview-title" data-effect-preview>
             <div className={styles.previewHeader}>
               <h2 id="preview-title">{locale === "zh" ? "实时预览" : "Live preview"}</h2>
@@ -296,14 +352,17 @@ function EffectWorkbench({ module, sourceCode }: { module: EffectModule; sourceC
               <span className={styles.reduced}>{t.detail.reduced}</span>
             </div>
           </section>
-          <ParamControls
-            spec={spec}
-            params={params}
-            onChange={updateParams}
-            onReset={handleReset}
-            onShare={handleShare}
-            shareStatus={shareStatus}
-          />
+
+          <div className={styles.params}>
+            <ParamControls
+              spec={spec}
+              params={params}
+              onChange={updateParams}
+              onReset={handleReset}
+              onShare={handleShare}
+              shareStatus={shareStatus}
+            />
+          </div>
         </div>
 
         <section className={styles.howto} aria-labelledby="howto-title">
@@ -383,11 +442,11 @@ function EffectWorkbench({ module, sourceCode }: { module: EffectModule; sourceC
             </div>
           </details>
         </section>
-
-        <footer className={styles.privacyFooter}>
-          <Link href="/privacy">{locale === "zh" ? "隐私" : "Privacy"}</Link>
-        </footer>
       </main>
+
+      <div className={styles.footerSlot}>
+        <SiteFooter />
+      </div>
 
       <div className={styles.mobileCopy} aria-label={locale === "zh" ? "复制当前提示词" : "Copy current prompt"}>
         <div>

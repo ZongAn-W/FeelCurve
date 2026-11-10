@@ -1,15 +1,20 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useLocale } from "@/components/providers/Providers";
 import { liveModules } from "@/content/effects/registry";
 import styles from "./HomeHero.module.css";
+
+const FEATURED = liveModules[0]?.spec.slug ?? "magnetic-button";
 
 export function HomeHero() {
   const { locale, t } = useLocale();
 
   return (
     <section className={styles.hero} aria-labelledby="home-title">
+      <div className={styles.glow} aria-hidden />
+
       <div className={styles.intro}>
         <h1
           id="home-title"
@@ -28,10 +33,7 @@ export function HomeHero() {
             <a href="#effects" className={styles.primary}>
               {locale === "zh" ? "浏览全部效果" : "Browse effects"}
             </a>
-            <Link
-              href={`/effects/${liveModules[0]?.spec.slug ?? "magnetic-button"}`}
-              className={styles.secondary}
-            >
+            <Link href={`/effects/${FEATURED}`} className={styles.secondary}>
               {locale === "zh" ? "体验一个效果" : "Try an effect"}
             </Link>
           </div>
@@ -56,6 +58,38 @@ export function HomeHero() {
           <dd>2</dd>
         </div>
       </dl>
+
+      <figure className={styles.evidence}>
+        <Link
+          href={`/effects/${FEATURED}`}
+          className={styles.evidenceLink}
+          aria-label={t.hero.evidenceAlt}
+        >
+          <div className={styles.chrome}>
+            <span className={styles.dots} aria-hidden>
+              <i />
+              <i />
+              <i />
+            </span>
+            <span className={styles.url}>feelcurve.com/effects/{FEATURED}</span>
+            <span className={styles.open} aria-hidden>↗</span>
+          </div>
+          <div className={styles.shot}>
+            <Image
+              src="/hero-workbench-v2.jpg"
+              alt={t.hero.evidenceAlt}
+              width={2704}
+              height={1190}
+              priority
+              sizes="(max-width: 768px) 100vw, 1104px"
+            />
+          </div>
+          <figcaption className={styles.foot}>
+            <span className={styles.badge}>{t.hero.evidenceBadge}</span>
+            <span className={styles.captionText}>{t.hero.evidenceCaption}</span>
+          </figcaption>
+        </Link>
+      </figure>
     </section>
   );
 }

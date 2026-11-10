@@ -1,16 +1,18 @@
 "use client";
 
 import Link from "next/link";
-import { useRef, useState, type CSSProperties } from "react";
+import { useMemo, useRef, useState, type CSSProperties } from "react";
 import { useLocale } from "@/components/providers/Providers";
+import { CopyButton } from "@/components/ui/CopyButton";
 import { liveModules } from "@/content/effects/registry";
-import { defaultParams } from "@/content/effects/types";
+import { defaultParams, type EffectModule } from "@/content/effects/types";
 import {
   effectGroups,
   filterEffectModules,
   getEffectGroup,
   type EffectGroup,
 } from "@/lib/effect-catalog";
+import type { Locale } from "@/lib/i18n";
 import styles from "./EffectLibrary.module.css";
 
 const copy = {
@@ -21,7 +23,11 @@ const copy = {
     clearSearch: "清空搜索",
     categories: "按类型筛选效果",
     clearFilters: "清除筛选",
-    open: "调参并复制",
+    open: "调参 →",
+    copyPrompt: "复制提示词",
+    copied: "已复制",
+    copyFailed: "复制失败",
+    stacksLabel: "技术栈",
     emptyTitle: "没有找到匹配的效果",
     emptyDescription: "换个关键词，或清除筛选看看其他效果。",
     upcoming: "接下来，还会有更多手感。",
@@ -34,7 +40,11 @@ const copy = {
     clearSearch: "Clear search",
     categories: "Filter effects by type",
     clearFilters: "Clear filters",
-    open: "Tune & copy",
+    open: "Tune →",
+    copyPrompt: "Copy prompt",
+    copied: "Copied",
+    copyFailed: "Copy failed",
+    stacksLabel: "stacks",
     emptyTitle: "No matching effects",
     emptyDescription: "Try a different keyword, or clear your filters to explore more.",
     upcoming: "More good motion is on the way.",
@@ -63,6 +73,86 @@ const groupCounts = Object.fromEntries(
       : liveModules.filter(({ spec }) => getEffectGroup(spec) === id).length,
   ]),
 );
+
+type CardProps = {
+  module: EffectModule;
+  locale: Locale;
+  content: (typeof copy)[Locale];
+  categoryLabel: string;
+  stageClass: string;
+};
+
+function EffectCard({ module, locale, content, categoryLabel, stageClass }: CardProps) {
+  const { spec, Demo, buildPrompt } = module;
+  const stackCount = Object.keys(spec.stacks).length;
+  const prompt = useMemo(
+    () =>
+      buildPrompt({
+        params: defaultParams(spec),
+        stack: "react",
+        variant: "full",
+        lang: locale,
+      }),
+    [buildPrompt, locale, spec],
+  );
+
+  return (
+    <article
+      data-effect-card={spec.slug}
+      aria-labelledby={`effect-card-${spec.slug}`}
+      className={styles.card}
+    >
+      <div className={`${styles.preview} ${stageClass}`}>
+        <div
+          className={styles.demo}
+          style={{
+            "--preview-scale": spec.previewScale ?? 1,
+            width: spec.previewWidth ? `${spec.previewWidth}px` : undefined,
+          } as CSSProperties}
+        >
+          <Demo
+            params={{ ...defaultParams(spec), ...(spec.previewParams ?? {}) }}
+            locale={locale}
+          />
+        </div>
+        <div className={styles.quickCopy}>
+          <CopyButton
+            text={prompt}
+            label={content.copyPrompt}
+            copiedLabel={content.copied}
+            failedLabel={content.copyFailed}
+            analytics={{
+              slug: spec.slug,
+              surface: "library_card",
+              stack: "react",
+              variant: "full",
+              lang: locale,
+            }}
+          />
+        </div>
+      </div>
+      <div className={styles.cardBody}>
+        <h3 id={`effect-card-${spec.slug}`}>{spec.name[locale]}</h3>
+        <p className={styles.tagline}>{spec.tagline[locale]}</p>
+        <div className={styles.cardFooter}>
+          <p className={styles.meta}>
+            {categoryLabel}
+            <span aria-hidden> · </span>
+            {stackCount} {content.stacksLabel}
+          </p>
+          <Link
+            href={`/effects/${spec.slug}`}
+            data-effect-link={spec.slug}
+            aria-label={`${content.open} ${spec.name[locale]}`}
+            className={styles.openLink}
+          >
+            {content.open}
+          </Link>
+        </div>
+      </div>
+    </article>
+  );
+}
 
 export function EffectLibrary() {
   const { locale, t } = useLocale();
@@ -139,45 +229,18 @@ export function EffectLibrary() {
       <div id="effect-results" className={styles.results}>
         {modules.length > 0 ? (
           <div className={styles.grid}>
-            {modules.map(({ spec, Demo }) => {
+            {modules.map((module) => {
+              const { spec } = module;
               const category = effectGroups.find(({ id }) => id === getEffectGroup(spec))!;
               return (
-                <article
+                <EffectCard
                   key={spec.slug}
-                  data-effect-card={spec.slug}
-                  aria-labelledby={`effect-card-${spec.slug}`}
-                  className={styles.card}
-                >
-                  <div className={`${styles.preview} ${stageStyles[spec.slug] ?? ""}`}>
-                    <div
-                      className={styles.demo}
-                      style={{
-                        "--preview-scale": spec.previewScale ?? 1,
-                        width: spec.previewWidth ? `${spec.previewWidth}px` : undefined,
-                      } as CSSProperties}
-                    >
-                      <Demo
-                        params={{ ...defaultParams(spec), ...(spec.previewParams ?? {}) }}
-                        locale={locale}
-                      />
-                    </div>
-                  </div>
-                  <div className={styles.cardBody}>
-                    <h3 id={`effect-card-${spec.slug}`}>{spec.name[locale]}</h3>
-                    <p className={styles.tagline}>{spec.tagline[locale]}</p>
-                    <div className={styles.cardFooter}>
-                      <span className={styles.categoryLabel}>{category.label[locale]}</span>
-                      <Link
-                        href={`/effects/${spec.slug}`}
-                        data-effect-link={spec.slug}
-                        aria-label={`${content.open}: ${spec.name[locale]}`}
-                        className={styles.openLink}
-                      >
-                        {content.open}
-                      </Link>
-                    </div>
-                  </div>
-                </article>
+                  module={module}
+                  locale={locale}
+                  content={content}
+                  categoryLabel={category.label[locale]}
+                  stageClass={stageStyles[spec.slug] ?? ""}
+                />
               );
             })}
           </div>

@@ -148,12 +148,12 @@
 .preview {
   position: relative;
   display: flex;
-  height: 300px;
+  aspect-ratio: 4 / 3;
   align-items: center;
   justify-content: center;
   overflow: hidden;
   border: 1px solid #292e36;
-  border-radius: 14px;
+  border-radius: 16px;
   background: #15191f;
   isolation: isolate;
   transition: border-color 150ms ease-out;
@@ -170,10 +170,46 @@
   flex-shrink: 0;
   transform: scale(var(--preview-scale, 1));
   transform-origin: center;
+  transition: transform 200ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.card:hover .demo,
+.card:focus-within .demo {
+  transform: scale(calc(var(--preview-scale, 1) * 1.02));
 }
 
 .demo > * {
   max-width: 100%;
+}
+
+.quickCopy {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  z-index: 2;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(4px);
+  transition: opacity 180ms ease-out, transform 180ms ease-out;
+}
+
+.card:hover .quickCopy,
+.card:focus-within .quickCopy {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+
+.quickCopy > button {
+  box-shadow: 0 10px 30px -12px rgba(0, 0, 0, 0.75);
+}
+
+@media (hover: none) {
+  .quickCopy {
+    opacity: 1;
+    pointer-events: auto;
+    transform: none;
+  }
 }
 
 .stageBlue {
@@ -227,27 +263,25 @@
   justify-content: space-between;
   gap: 12px;
   margin-top: auto;
-  padding-top: 8px;
+  padding-top: 10px;
 }
 
-.categoryLabel {
+.meta {
   color: #9398a2;
   font-size: 12px;
   line-height: 1.6;
+  font-variant-numeric: tabular-nums;
 }
 
 .openLink {
   display: inline-flex;
-  min-height: 44px;
+  min-height: 32px;
   flex-shrink: 0;
   align-items: center;
-  padding-inline: 8px;
+  padding-inline: 2px;
   border-radius: 6px;
-  color: var(--color-ink);
-  font-size: 13px;
-  text-decoration: underline;
-  text-decoration-color: #57604b;
-  text-underline-offset: 5px;
+  color: #b0b5bd;
+  font-size: 12.5px;
   transition: color 150ms ease-out;
 }
 
@@ -378,7 +412,14 @@
 @media (prefers-reduced-motion: reduce) {
   .categories button,
   .preview,
+  .demo,
+  .quickCopy,
   .openLink {
     transition: none;
+  }
+
+  .card:hover .demo,
+  .card:focus-within .demo {
+    transform: scale(var(--preview-scale, 1));
   }
 }
