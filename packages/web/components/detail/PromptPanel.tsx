@@ -12,6 +12,7 @@ import {
 } from "@/content/effects/types";
 import type { Locale } from "@/lib/i18n";
 import { CopyButton } from "@/components/ui/CopyButton";
+import type { CopyAnalytics } from "@/lib/analytics";
 import styles from "./PromptPanel.module.css";
 
 type PromptPanelProps = {
@@ -24,6 +25,7 @@ type PromptPanelProps = {
   onExistingSourceChange: (source: string) => void;
   tab: "prompt" | "source";
   onTabChange: (tab: "prompt" | "source") => void;
+  analytics?: CopyAnalytics;
 };
 
 type Tab = "prompt" | "source";
@@ -114,6 +116,7 @@ export function PromptPanel({
   onExistingSourceChange,
   tab,
   onTabChange,
+  analytics,
 }: PromptPanelProps) {
   const { locale, t } = useLocale();
   const spec = module.spec;
@@ -206,6 +209,7 @@ export function PromptPanel({
             failedLabel={t.toast.failed}
             variant="ghost"
             className={styles.copyButton}
+            analytics={analytics}
           />
         </div>
       </header>

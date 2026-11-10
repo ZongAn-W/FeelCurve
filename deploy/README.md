@@ -96,6 +96,110 @@ snap install --classic certbot
 - 80 端口对域名和 IP 都 301 到 `https://feelcurve.com`；`https://47.116.63.161` 会因证书不含 IP 而告警，属预期。安全组需放行 443。
 - 上线后启用了 HSTS（`max-age=31536000`）。
 
+## 访问统计（Umami）
+
+统计默认关闭。`packages/web/lib/analytics-config.ts` 中两个常量都为空时，页面不会渲染 Umami 脚本，也不会发出统计请求；清空常量并重新发布即可关闭。
+
+### Umami Cloud
+
+1. 在 https://umami.is/ 注册并登录，新建 website，域名填 `feelcurve.com`。
+2. 打开该 website 的 Tracking code，复制 `script.js` 地址和 `data-website-id`。
+3. 填入 `packages/web/lib/analytics-config.ts`：
+
+```ts
+// 以 Umami 控制台 Tracking code 显示的地址为准。
+export const UMAMI_SCRIPT_URL = "https://cloud.umami.is/script.js";
+export const UMAMI_WEBSITE_ID = "<你的 website id>";
+```
+
+这两个值都是公开信息，会出现在页面 HTML 里，不是密钥。不要把 Umami API key、登录密码或其他令牌写进仓库。
+
+### 自托管 Umami
+
+在自托管实例中新建 website 后，把 `UMAMI_SCRIPT_URL` 设为 `https://<你的 Umami 域名>/script.js`，`UMAMI_WEBSITE_ID` 填该 website 的 ID。脚本地址必须能被公网 HTTPS 访问；不需要新增 npm 依赖或构建环境变量。
+
+### 发布与验证
+
+```powershell
+cd D:\_projects\aiprompt
+.\update.cmd
+```
+
+发布后：
+
+1. 打开 https://feelcurve.com，在浏览器 DevTools 的 Network 面板筛选 `script.js`，确认请求返回 200；Console 执行 `window.umami` 应能看到跟踪对象。
+2. 在 Umami 的 Realtime 或 Events 中确认出现页面访问（PV）。
+3. 点击任意“复制提示词”按钮，确认出现事件 `copy_prompt`，属性包含 `slug`、`surface`、`stack`、`variant`、`lang`。
+4. 把两个常量改回空字符串并重新发布，确认不再请求 Umami、Console 无报错。
+
+埋点只发送上述公开元数据；不会发送提示词正文、源码、邮箱，也不会把 IP 放进事件参数。
+
+## 可用性监控
+
+站点提供只读健康检查接口 `GET /api/health`：
+
+```json
+{ "status": "ok", "timestamp": "2026-11-09T09:00:00.000Z", "uptime": 12345 }
+```
+
+- 固定返回 `200`，响应头 `Cache-Control: no-store`，不包含提交号、环境变量或主机名。
+- 与其他页面共用 Nginx 现有的 `/` 转发，不需要新增 location。
+- 本机或服务器验证：
+
+```bash
+curl -i http://127.0.0.1:3000/api/health
+curl -fsS http://127.0.0.1:3000/api/health | grep -q '"status":"ok"' && echo "health: ok"
+```
+
+第一条确认状态码和响应头；第二条在 HTTP 非 2xx 或 JSON 不是 `status: ok` 时返回非零退出码。
+
+### 外部监控（UptimeRobot / BetterStack）
+
+这部分需要监控平台账号，按下面的步骤在平台控制台手动完成；仓库中不保存账号、Webhook 地址或令牌。
+
+1. 登录 https://uptimerobot.com 或 https://betterstack.com，创建监控。
+2. 健康接口监控：
+   - URL：`https://feelcurve.com/api/health`
+   - 间隔：5 分钟
+   - 判定：HTTP 状态码为 `200`，且响应体包含 `"status":"ok"`。UptimeRobot 选 Keyword 类型并填关键字 `"status":"ok"`；BetterStack 选 Keyword 类型，或在 HTTP 监控中配置响应体关键字断言。
+   - 只有状态码和 JSON 内容同时满足才算健康；只看 `200` 无法发现接口返回错误内容的情况。
+3. 页面监控：
+   - URL：`https://feelcurve.com/effects/magnetic-button`
+   - 间隔：5 分钟
+   - 判定：HTTP `200`，并可加一个稳定关键字（如页面标题中的 `Magnetic`）确认拿到的是页面而非错误页。
+4. 告警：在 Alert Contacts / On-call 中添加邮箱；需要微信通知时，使用平台的 Webhook 集成转发到企业微信群机器人（或 Server酱等），按对应服务的文档填写地址。至少配置一个实际能收到的渠道，并用平台的测试告警确认送达。
+5. 免费套餐可能限制 5 分钟间隔或告警渠道；若 5 分钟不可选，使用套餐允许的最短间隔。
+
+监控只验证 HTTPS 公网入口，不替代 PM2 的进程状态检查。收到告警后先按「常用操作」查看 `pm2 status`、`pm2 logs feelcurve-web` 和 `curl -i http://127.0.0.1:3000/api/health`，再判断是应用、PM2 还是 Nginx/证书问题。
+
+### PM2 日志轮转
+
+服务器执行一次即可：
+
+```bash
+pm2 install pm2-logrotate
+pm2 set pm2-logrotate:max_size 10M
+pm2 set pm2-logrotate:retain 14
+pm2 set pm2-logrotate:compress true
+```
+
+- `max_size 10M`：单个日志超过 10MB 时轮转。
+- `retain 14`：最多保留 14 个历史日志文件。
+- `compress true`：轮转后的日志用 gzip 压缩。
+
+查看当前配置和运行状态：
+
+```bash
+pm2 conf
+pm2 list
+pm2 describe pm2-logrotate
+ls -lh /root/.pm2/logs/
+```
+
+`pm2 conf` 应显示 `max_size: 10M`、`retain: 14`、`compress: true`；`pm2 describe pm2-logrotate` 中 `status` 应为 `online`，`pm2 list` 也应能看到该模块。轮转文件出现在 `/root/.pm2/logs/`（文件名带时间戳，压缩后以 `.gz` 结尾）。
+
+日志轮转只处理 PM2 日志，不需要重启 `feelcurve-web`，也不需要修改 `deploy/ecosystem.config.cjs`；其中的 `name`、`cwd`、`script`、`args`、`instances` 由 `update-server.sh` 校验，保持不变。
+
 ## ICP 备案
 
 站点已通过 ICP 备案（安徽管局、个人主体）。按管局要求，首页页脚需要展示备案号并链接到 https://beian.miit.gov.cn/ 。新增备案号后修改前端页脚，再执行 `update.cmd` 部署。域名未备案时阿里云会拦截访问（403 / `Non-compliance ICP Filing`），不要指望用 IP 或非标准端口绕过。

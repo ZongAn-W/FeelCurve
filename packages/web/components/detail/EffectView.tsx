@@ -198,13 +198,20 @@ function EffectWorkbench({ module, sourceCode }: { module: EffectModule; sourceC
   const variantLabels = locale === "zh"
     ? { full: "完整版", compact: "精简版", retrofit: "改造版" }
     : { full: "Full", compact: "Compact", retrofit: "Retrofit" };
-  const copyAction = (
+  const renderCopyAction = (surface: "effect_desktop" | "effect_mobile") => (
     <CopyButton
       text={prompt}
       label={t.detail.copyPrompt}
       copiedLabel={t.detail.copied}
       failedLabel={t.toast.failed}
       className={styles.copyButton}
+      analytics={{
+        slug: spec.slug,
+        surface,
+        stack,
+        variant,
+        lang: promptLang,
+      }}
     />
   );
 
@@ -242,7 +249,9 @@ function EffectWorkbench({ module, sourceCode }: { module: EffectModule; sourceC
               <option value="en">English</option>
             </select>
           </label>
-          <div className={styles.desktopCopy}>{copyAction}</div>
+          <div className={styles.desktopCopy}>
+            {renderCopyAction("effect_desktop")}
+          </div>
         </div>
 
         <p className={styles.selectionHint}>
@@ -308,6 +317,13 @@ function EffectWorkbench({ module, sourceCode }: { module: EffectModule; sourceC
             onExistingSourceChange={setExistingSource}
             tab={outputTab}
             onTabChange={setOutputTab}
+            analytics={{
+              slug: spec.slug,
+              surface: "prompt_panel",
+              stack,
+              variant,
+              lang: promptLang,
+            }}
           />
         </div>
 
@@ -361,7 +377,7 @@ function EffectWorkbench({ module, sourceCode }: { module: EffectModule; sourceC
           <span>{variantLabels[variant]} / {promptLang === "zh" ? "中文" : "English"}</span>
           <p>{stackLabel}</p>
         </div>
-        {copyAction}
+        {renderCopyAction("effect_mobile")}
       </div>
     </div>
   );
