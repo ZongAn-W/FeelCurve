@@ -1,24 +1,36 @@
-import type { Metadata } from "next";
+import type { Metadata, ResolvingMetadata } from "next";
 import { notFound } from "next/navigation";
 import { EffectView } from "@/components/detail/EffectView";
 import { effectModules, getEffectModule } from "@/content/effects/registry";
 import { readEffectSource } from "@/lib/effect-source";
+import { SITE_URL } from "@/lib/site-info";
 
 export function generateStaticParams() {
   return effectModules.map((module) => ({ slug: module.spec.slug }));
 }
 
-export async function generateMetadata({
-  params,
-}: {
-  params: Promise<{ slug: string }>;
-}): Promise<Metadata> {
+export async function generateMetadata(
+  {
+    params,
+  }: {
+    params: Promise<{ slug: string }>;
+  },
+  parent: ResolvingMetadata,
+): Promise<Metadata> {
   const { slug } = await params;
   const module = getEffectModule(slug);
   if (!module) return {};
+  const parentMetadata = await parent;
   return {
     title: `${module.spec.name.zh} · ${module.spec.name.en} — FeelCurve`,
     description: module.spec.description.zh,
+    alternates: {
+      canonical: `/effects/${slug}`,
+    },
+    openGraph: {
+      ...(parentMetadata.openGraph ?? {}),
+      url: `${SITE_URL}/effects/${slug}`,
+    },
   };
 }
 
