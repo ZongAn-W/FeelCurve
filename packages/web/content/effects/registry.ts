@@ -1,4 +1,5 @@
 import { animatedNumber } from "./animated-number";
+import { digitRoller } from "./digit-roller";
 import { holdToDelete } from "./hold-to-delete";
 import { jellyToggle } from "./jelly-toggle";
 import { liquidGlassButton } from "./liquid-glass-button";
@@ -25,6 +26,7 @@ export const effectModules: EffectModule[] = [
   jellyToggle,
   holdToDelete,
   animatedNumber,
+  digitRoller,
   skeletonShimmer,
   staggerList,
   toastExit,
