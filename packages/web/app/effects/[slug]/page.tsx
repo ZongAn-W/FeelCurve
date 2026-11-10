@@ -9,6 +9,9 @@ export function generateStaticParams() {
   return effectModules.map((module) => ({ slug: module.spec.slug }));
 }
 
+// 未知 slug 在路由层直接命中静态 404；若放开，Next 16 会用客户端错误壳渲染 notFound()。
+export const dynamicParams = false;
+
 export async function generateMetadata(
   {
     params,
