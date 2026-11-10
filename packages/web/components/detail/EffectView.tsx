@@ -306,6 +306,19 @@ function EffectWorkbench({ module, sourceCode }: { module: EffectModule; sourceC
           />
         </div>
 
+        <section className={styles.howto} aria-labelledby="howto-title">
+          <h2 id="howto-title">{t.steps.label}</h2>
+          <ol>
+            {t.steps.items.map((item, index) => (
+              <li key={item.title}>
+                <span className={styles.howtoNumber}>{String(index + 1).padStart(2, "0")}</span>
+                <strong>{item.title}</strong>
+                <span>{item.desc}</span>
+              </li>
+            ))}
+          </ol>
+        </section>
+
         <div id="prompt-output" className={styles.output} tabIndex={-1}>
           <PromptPanel
             module={module}

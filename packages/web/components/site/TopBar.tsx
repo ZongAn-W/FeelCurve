@@ -36,9 +36,6 @@ export function TopBar({ compact = false }: { compact?: boolean }) {
           <a href="/#effects" className="animated-underline flex min-h-11 items-center rounded-sm hover:text-ink">
             {t.nav.effects}
           </a>
-          <a href="/#method" className="animated-underline hidden min-h-11 items-center rounded-sm hover:text-ink sm:flex">
-            {locale === "zh" ? "使用方式" : "How it works"}
-          </a>
         </nav>
 
         <button
