@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
+import { Analytics } from "@/components/analytics/Analytics";
 import { Providers } from "@/components/providers/Providers";
 
 const displayFont = localFont({
@@ -43,6 +44,7 @@ export default function RootLayout({
     >
       <body>
         <Providers>{children}</Providers>
+        <Analytics />
       </body>
     </html>
   );

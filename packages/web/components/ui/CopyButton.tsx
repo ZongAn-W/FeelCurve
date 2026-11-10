@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { trackEvent, type CopyAnalytics } from "@/lib/analytics";
 import { writeTextToClipboard } from "@/lib/clipboard";
 
 type CopyState = "idle" | "copied" | "failed";
@@ -12,6 +13,7 @@ type CopyButtonProps = {
   failedLabel: string;
   variant?: "primary" | "ghost";
   className?: string;
+  analytics?: CopyAnalytics;
 };
 
 export function CopyButton({
@@ -21,6 +23,7 @@ export function CopyButton({
   failedLabel,
   variant = "primary",
   className = "",
+  analytics,
 }: CopyButtonProps) {
   const [status, setStatus] = useState<CopyState>("idle");
 
@@ -42,7 +45,11 @@ export function CopyButton({
     setStatus("idle");
     const ok = await writeTextToClipboard(text);
     setStatus(ok ? "copied" : "failed");
-  }, [text]);
+
+    if (ok) {
+      trackEvent("copy_prompt", analytics ? { ...analytics } : undefined);
+    }
+  }, [analytics, text]);
 
   const base =
     "inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-xl px-4 py-2.5 text-[13px] font-medium transition-[background-color,color,transform] duration-200 active:scale-[0.99]";

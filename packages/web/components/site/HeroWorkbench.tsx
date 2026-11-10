@@ -149,6 +149,13 @@ export function HeroWorkbench() {
             failedLabel={t.toast.failed}
             variant="ghost"
             className={styles.copyButton}
+            analytics={{
+              slug: spec.slug,
+              surface: "hero",
+              stack: "react",
+              variant: "full",
+              lang: locale,
+            }}
           />
         </footer>
       </div>
