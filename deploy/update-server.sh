@@ -33,6 +33,7 @@ release="$deploy_root/feelcurve-release-$release_id"
 backup="$deploy_root/feelcurve-backup-$release_id"
 failed="$deploy_root/feelcurve-failed-$release_id"
 app_name=feelcurve-web
+npm_registry=${NPM_CONFIG_REGISTRY:-https://registry.npmmirror.com}
 switch_started=0
 committed=0
 
@@ -201,6 +202,25 @@ except (OSError, tarfile.TarError, ValueError) as error:
     sys.exit(1)
 PY
 
+install_dependencies() {
+  local dir=$1
+  shift
+  (
+    cd "$dir"
+    if command -v systemd-run >/dev/null 2>&1; then
+      log 'Installing dependencies with a 900 MB memory cap (systemd scope).'
+      systemd-run --scope --quiet \
+        -p MemoryMax=900M -p MemorySwapMax=1G \
+        env NEXT_TELEMETRY_DISABLED=1 npm_config_registry="$npm_registry" \
+        npm ci --no-audit --no-fund --prefer-offline "$@"
+    else
+      log 'systemd-run is unavailable; installing dependencies without a memory cap.'
+      NEXT_TELEMETRY_DISABLED=1 npm_config_registry="$npm_registry" \
+        npm ci --no-audit --no-fund --prefer-offline "$@"
+    fi
+  )
+}
+
 log "Preparing new release: $release_id (mode: $build_mode)"
 mkdir -- "$release"
 tar --extract --gzip --file "$archive" --directory "$release" --no-same-owner --no-same-permissions
@@ -209,15 +229,12 @@ if [[ $build_mode == prebuilt ]]; then
   [[ -d $release/packages/web/.next/server ]] || fail 'Prebuilt server output is missing.'
   [[ -d $release/packages/web/.next/static ]] || fail 'Prebuilt static output is missing.'
   log 'Installing runtime dependencies for the prebuilt release.'
-  (
-    cd "$release"
-    NEXT_TELEMETRY_DISABLED=1 npm ci --omit=dev --workspace @feelcurve/web --include-workspace-root
-  )
+  install_dependencies "$release" --omit=dev --workspace @feelcurve/web --include-workspace-root
 else
   log 'Installing dependencies and building on the server.'
+  install_dependencies "$release" --workspace @feelcurve/web --include-workspace-root
   (
     cd "$release"
-    npm ci --workspace @feelcurve/web --include-workspace-root
     NEXT_TELEMETRY_DISABLED=1 npm run build:web
   )
 fi
