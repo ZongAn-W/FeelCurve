@@ -30,6 +30,18 @@ import {
   readEffectPageState,
 } from "@/lib/effect-url";
 
+const STAGE_CLASSES: Record<string, string> = {
+  "magnetic-button": styles.stageBlue,
+  "spotlight-card": styles.stageGraphite,
+  "staggered-text": styles.stageWarm,
+  "liquid-glass-button": styles.stagePlum,
+  "submit-button": styles.stageTeal,
+  "jelly-toggle": styles.stagePlum,
+  "hold-to-delete": styles.stageWarm,
+  "animated-number": styles.stageTeal,
+  "digit-roller": styles.stageGraphite,
+};
+
 const CATEGORY_LABELS: Record<string, { zh: string; en: string }> = {
   pointer: { zh: "指针交互", en: "Pointer interaction" },
   scroll: { zh: "滚动", en: "Scroll" },
@@ -337,7 +349,7 @@ function EffectWorkbench({ module, sourceCode }: { module: EffectModule; sourceC
               <h2 id="preview-title">{locale === "zh" ? "实时预览" : "Live preview"}</h2>
               <span>{categoryLabel}</span>
             </div>
-            <div className={`${styles.stage} ${spec.slug === "magnetic-button" ? styles.stageBlue : ""}`}>
+            <div className={`${styles.stage} ${STAGE_CLASSES[spec.slug] ?? ""}`}>
               <Demo params={params} locale={locale} />
             </div>
             <div className={styles.previewFooter}>

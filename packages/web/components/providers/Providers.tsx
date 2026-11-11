@@ -14,6 +14,7 @@ import {
   type Dictionary,
   type Locale,
 } from "@/lib/i18n";
+import { AuthProvider } from "./AuthProvider";
 
 type LocaleContextValue = {
   locale: Locale;
@@ -60,7 +61,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
   );
 
   return (
-    <LocaleContext.Provider value={value}>{children}</LocaleContext.Provider>
+    <LocaleContext.Provider value={value}>
+      <AuthProvider>{children}</AuthProvider>
+    </LocaleContext.Provider>
   );
 }
 

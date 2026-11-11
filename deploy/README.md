@@ -2,6 +2,42 @@
 
 当前部署前端展示站，访问地址为 https://feelcurve.com（HTTP 自动跳转到 HTTPS）。后端与数据库暂未启用。
 
+> 登录 API 尚未上线，且当前前端构建默认请求 `http://localhost:3001`。在后端部署完成前，线上登录页会提示无法连接登录服务；不要单独发布带登录入口的前端。上线步骤见下方「登录后端上线清单（尚未执行）」。
+
+## 登录后端上线清单（尚未执行）
+
+以下步骤只用于以后真正部署登录 API，当前线上没有执行。
+
+1. 服务器准备持久化 SQLite 目录（不要放在会被发布切换的 `/opt/feelcurve` 里），例如 `/opt/feelcurve-data`，并确保 PM2 运行用户可以写入；换 Postgres 时改 `DATABASE_URL` 和 schema provider。
+2. 在服务器 `packages/api` 下设置生产环境变量：`NODE_ENV=production`、`JWT_SECRET`（用 `openssl rand -hex 32` 生成）、`DATABASE_URL="file:/opt/feelcurve-data/feelcurve.db"`、`WEB_APP_URL=https://feelcurve.com`、`API_PUBLIC_URL=https://feelcurve.com`、`CORS_ORIGIN=https://feelcurve.com`，以及 GitHub OAuth App 的 `GITHUB_CLIENT_ID`/`GITHUB_CLIENT_SECRET`。不要把 `.env` 提交到 Git 或打进发布包。
+3. 执行一次数据库同步：`cd /opt/feelcurve/packages/api && npx prisma db push`。目前没有 migrations；正式长期使用前应补 migration 流程，避免每次依赖 `db push`。
+4. 部署 API：现有 `update.cmd` 只打包 `packages/web`，需要另行上传 `packages/api`（含构建好的 `dist`，或在服务器安装依赖后执行 `npm run build:api`）。在服务器安装运行时依赖；PM2 的 `cwd` 指向 `/opt/feelcurve/packages/api`，确保 ConfigModule 读取同目录的 `.env`。启动 `node dist/main.js`（端口 3001，只监听内网/回环地址），并在 `deploy/ecosystem.config.cjs` 增加 `feelcurve-api` 进程。
+5. 在 Nginx 的 HTTPS server 中增加只转发 auth 的 location，保留现有 Next 的 `/api/health`：
+
+   ```nginx
+   location /api/auth/ {
+       proxy_pass http://127.0.0.1:3001;
+       proxy_set_header Host $host;
+       proxy_set_header X-Real-IP $remote_addr;
+       proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+       proxy_set_header X-Forwarded-Proto $scheme;
+   }
+   ```
+
+   执行 `nginx -t` 后 reload。不要把整个 `/api/` 转发到 Nest，否则会覆盖 Next 现有的 `/api/health`。
+6. GitHub OAuth App 的 Authorization callback URL 填 `https://feelcurve.com/api/auth/github/callback`（或与 `GITHUB_CALLBACK_URL` 一致）。
+7. 构建前端时设置 `NEXT_PUBLIC_API_URL=https://feelcurve.com`，再执行 `update.cmd`。例如 PowerShell：
+
+   ```powershell
+   $env:NEXT_PUBLIC_API_URL = "https://feelcurve.com"
+   .\update.cmd
+   ```
+
+   该值是构建时写入的，改地址必须重新构建；默认的 localhost 不能用于线上。
+8. 验证：`curl -i https://feelcurve.com/api/auth/me` 应返回 401 JSON；浏览器完成注册、刷新、退出、再登录，并确认会话 Cookie 带 `HttpOnly`、`Secure`、`SameSite=Lax`。
+
+上线前还需要补登录限流（Nginx `limit_req` 或应用层），并注意当前没有邮箱验证、找回密码和账号自助删除功能。退出只清除 Cookie，已签发的 JWT 在 7 天内仍然有效。
+
 ## 一键更新（推荐）
 
 保存本机代码后，双击项目根目录的 `update.cmd`。也可以在本机 PowerShell 执行：

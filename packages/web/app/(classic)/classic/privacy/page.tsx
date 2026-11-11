@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { TopBar } from "@/components/site/TopBar";
+import { TopBar } from "@/components/classic/site/TopBar";
 import { ICP_LICENSE, ICP_LICENSE_URL } from "@/lib/site-info";
 
 export const metadata: Metadata = {
@@ -8,7 +8,7 @@ export const metadata: Metadata = {
   description:
     "FeelCurve 的隐私说明：访问日志、匿名访问统计与错误上报的实际处理情况。",
   robots: { index: false },
-  alternates: { canonical: "/privacy" },
+  alternates: { canonical: "/classic/privacy" },
 };
 
 // 隐私联系邮箱。
@@ -36,15 +36,42 @@ export default function PrivacyPage() {
         </h1>
         <p className="mt-3 text-[13px] text-faint">
           最近更新：
-          <time dateTime="2026-11-10">2026-11-10</time>
+          <time dateTime="2026-11-11">2026-11-11</time>
         </p>
         <p className="mt-6 max-w-[68ch] text-[14px] leading-7 text-muted">
-          本页说明 FeelCurve（https://feelcurve.com）当前实际处理的数据。本站不需要登录，不提供账号、支付或上传功能；提示词正文和源码不会发送到统计或错误上报服务。
+          本页说明 FeelCurve（https://feelcurve.com）当前实际处理的数据。浏览、调参和复制提示词不要求登录；你可以选择用邮箱密码或 GitHub 创建账号。本站不提供支付或上传功能，提示词正文和源码不会发送到统计或错误上报服务。
         </p>
 
         <div className="mt-10 space-y-9">
           <section className={sectionClass}>
-            <h2 className={headingClass}>1. 访问日志</h2>
+            <h2 className={headingClass}>1. 账号与登录（可选）</h2>
+            <p className={bodyClass}>
+              不登录也可以使用效果库、调参和复制提示词。注册或登录时，我们会处理以下数据：
+            </p>
+            <ul className={listClass}>
+              <li>
+                邮箱地址。使用邮箱注册时，还会保存你填写的昵称（可选）和密码哈希（bcrypt）；本站不保存明文密码。
+              </li>
+              <li>
+                使用 GitHub 登录时，从 GitHub 接收账号 ID、已验证邮箱、昵称和头像地址，用于创建或关联账号。授权过程会将浏览器跳转到 GitHub，GitHub 对数据的处理适用其隐私政策。
+              </li>
+              <li>
+                登录会话 Cookie <code className={codeClass}>fc_session</code>
+                （httpOnly、SameSite=Lax，有效期 7 天），以及 GitHub 授权过程中的临时 Cookie{" "}
+                <code className={codeClass}>fc_github_state</code>
+                （10 分钟）。它们只用于保持登录和防止授权请求被伪造，不用于广告跟踪。
+              </li>
+              <li>
+                账号数据用于识别账号和保持登录状态；除法律要求或保障服务安全外，不会出售或分享给第三方。
+              </li>
+              <li>
+                账号数据保留至你要求删除账号。可发送邮件至下方联系邮箱申请删除，删除后无法恢复。目前暂未提供邮箱验证、找回密码或账号自助删除功能。
+              </li>
+            </ul>
+          </section>
+
+          <section className={sectionClass}>
+            <h2 className={headingClass}>2. 访问日志</h2>
             <p className={bodyClass}>
               站点由 Nginx 提供服务，会记录访问时间、IP 地址、请求路径、HTTP 状态、来源页面以及浏览器/设备信息。这些日志用于安全防护、故障排查和了解站点可用性。
             </p>
@@ -54,7 +81,7 @@ export default function PrivacyPage() {
           </section>
 
           <section className={sectionClass}>
-            <h2 className={headingClass}>2. 匿名访问统计（当前启用）</h2>
+            <h2 className={headingClass}>3. 匿名访问统计（当前启用）</h2>
             <p className={bodyClass}>
               本站使用 Umami Cloud 统计页面访问，记录页面路径、来源、浏览器/操作系统、国家或地区，以及复制提示词时的
               <code className={codeClass}>copy_prompt</code>
@@ -78,7 +105,7 @@ export default function PrivacyPage() {
           </section>
 
           <section className={sectionClass}>
-            <h2 className={headingClass}>3. 错误上报（当前未启用）</h2>
+            <h2 className={headingClass}>4. 错误上报（当前未启用）</h2>
             <p className={bodyClass}>
               代码中已预留 Sentry 错误上报，但当前 DSN 为空，因此不会向 Sentry 发送错误。未来如启用，异常时可能发送错误堆栈、页面 URL、浏览器/设备信息；配置为不采集用户信息、不采集请求体，也不主动附加提示词或源码。保留期以 Sentry 项目设置为准。
             </p>
@@ -97,14 +124,14 @@ export default function PrivacyPage() {
           </section>
 
           <section className={sectionClass}>
-            <h2 className={headingClass}>4. 主机与第三方服务</h2>
+            <h2 className={headingClass}>5. 主机与第三方服务</h2>
             <p className={bodyClass}>
-              站点运行在阿里云 ECS 上；主机商可能按云服务条款处理基础网络与安全日志。除上文列出的 Umami Cloud、Sentry 和阿里云外，本站没有接入广告、画像或其他第三方跟踪服务。
+              站点运行在阿里云 ECS 上；主机商可能按云服务条款处理基础网络与安全日志。使用 GitHub 登录时，GitHub 会作为第三方身份提供方参与（见第 1 节）。除上文列出的 Umami Cloud、Sentry、GitHub 和阿里云外，本站没有接入广告、画像或其他第三方跟踪服务。
             </p>
           </section>
 
           <section className={sectionClass}>
-            <h2 className={headingClass}>5. 联系</h2>
+            <h2 className={headingClass}>6. 联系</h2>
             <p className={bodyClass}>
               如对数据处理有疑问，可发送邮件至{" "}
               <a className={linkClass} href={`mailto:${CONTACT_EMAIL}`}>
@@ -120,10 +147,10 @@ export default function PrivacyPage() {
 
         <div className="mt-12 flex flex-wrap items-center justify-between gap-3 border-t border-line pt-6 text-[12px] text-muted">
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
-            <Link href="/" className="transition-colors hover:text-ink">
+            <Link href="/classic" className="transition-colors hover:text-ink">
               回首页
             </Link>
-            <Link href="/#effects" className="transition-colors hover:text-ink">
+            <Link href="/classic#effects" className="transition-colors hover:text-ink">
               效果库
             </Link>
           </div>

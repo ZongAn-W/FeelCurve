@@ -1,0 +1,455 @@
+@import "tailwindcss";
+
+/*
+  FeelCurve — Swiss / International Typographic Style
+  Paper, ink, one red. Flat surfaces only. 12-column grid. Rules, not boxes.
+*/
+
+@theme {
+  --color-void: #f2efe8;
+  --color-surface: #f2efe8;
+  --color-surface-2: #f2efe8;
+  --color-surface-3: #f2efe8;
+  --color-line: #111111;
+  --color-ink: #111111;
+  --color-muted: rgba(17, 17, 17, 0.66);
+  --color-faint: rgba(17, 17, 17, 0.46);
+  --color-accent: #da291c;
+  --color-accent-dim: #da291c;
+
+  --font-sans: "Helvetica Neue", Helvetica, Arial, "Noto Sans SC",
+    "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  --font-mono: "Helvetica Neue", Helvetica, Arial, "Noto Sans SC",
+    "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+}
+
+:root {
+  color-scheme: light;
+  --paper: #f2efe8;
+  --ink: #111111;
+  --red: #da291c;
+  --rule: #111111;
+  --rule-soft: rgba(17, 17, 17, 0.24);
+  --page-pad: clamp(18px, 3.4vw, 54px);
+  --shell-max: 1600px;
+  --col-gap: clamp(12px, 1.35vw, 24px);
+  --section-space: clamp(72px, 9vw, 144px);
+}
+
+* {
+  box-sizing: border-box;
+  min-width: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-text-size-adjust: 100%;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  margin: 0;
+  overflow-x: hidden;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.5;
+  font-kerning: normal;
+}
+
+h1,
+h2,
+h3,
+h4,
+p,
+dl,
+dd,
+figure {
+  margin: 0;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-weight: 700;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+img,
+svg {
+  display: block;
+  max-width: 100%;
+}
+
+ul,
+ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+::selection {
+  background: var(--red);
+  color: var(--paper);
+}
+
+:focus-visible {
+  outline: 2px solid var(--red);
+  outline-offset: 3px;
+}
+
+/* The only shared container. Every section sits on the same 12 columns. */
+.shell {
+  width: 100%;
+  max-width: calc(var(--shell-max) + (var(--page-pad) * 2));
+  margin-inline: auto;
+  padding-inline: var(--page-pad);
+}
+
+.grid12 {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  column-gap: var(--col-gap);
+}
+
+.rule {
+  border: 0;
+  border-top: 1px solid var(--rule);
+}
+
+/* Typographic atoms used across modules. */
+.label {
+  font-size: 10px;
+  font-weight: 400;
+  line-height: 1.2;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.labelBold {
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.num {
+  font-variant-numeric: tabular-nums lining-nums;
+}
+
+.textLink {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  border-bottom: 1px solid currentColor;
+  padding-bottom: 3px;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: 0.02em;
+}
+
+.textLink:hover {
+  color: var(--red);
+}
+
+.btn {
+  display: inline-flex;
+  min-height: 42px;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 12px;
+  border: 1px solid var(--ink);
+  padding: 0 16px;
+  background: transparent;
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.02em;
+  text-align: left;
+  transition: background-color 160ms ease-out, color 160ms ease-out,
+    border-color 160ms ease-out;
+}
+
+.btn:hover {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.btnRed {
+  border-color: var(--red);
+  background: var(--red);
+  color: var(--paper);
+}
+
+.btnRed:hover {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.btnSolid {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.btnSolid:hover {
+  border-color: var(--red);
+  background: var(--red);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Touch devices see touch copy; hover devices see pointer copy. */
+.touch-only {
+  display: none;
+}
+
+@keyframes swissReveal {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.reveal {
+  animation: swissReveal 600ms cubic-bezier(0.2, 0.7, 0.3, 1) both;
+}
+
+/* --- controls ------------------------------------------------------- */
+
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 20px;
+  background: transparent;
+  cursor: pointer;
+}
+
+input[type="range"]::-webkit-slider-runnable-track {
+  height: 1px;
+  background: var(--ink);
+}
+
+input[type="range"]::-moz-range-track {
+  height: 1px;
+  background: var(--ink);
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  margin-top: -6px;
+  height: 13px;
+  width: 13px;
+  border: 1px solid var(--ink);
+  border-radius: 0;
+  background: var(--paper);
+}
+
+input[type="range"]::-moz-range-thumb {
+  height: 13px;
+  width: 13px;
+  border: 1px solid var(--ink);
+  border-radius: 0;
+  background: var(--paper);
+}
+
+input[type="range"]:active::-webkit-slider-thumb {
+  background: var(--red);
+  border-color: var(--red);
+}
+
+/* --- prompt body ---------------------------------------------------- */
+
+.prompt-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: var(--ink) transparent;
+}
+
+.prompt-scroll::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.prompt-scroll::-webkit-scrollbar-thumb {
+  background: var(--ink);
+}
+
+.prompt-body {
+  font-family: var(--font-sans);
+  font-size: 11.5px;
+  line-height: 1.75;
+  color: rgba(17, 17, 17, 0.82);
+  white-space: pre-wrap;
+  word-break: break-word;
+  tab-size: 2;
+}
+
+.prompt-h {
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.prompt-inline-code {
+  color: var(--ink);
+  border-bottom: 1px solid rgba(17, 17, 17, 0.35);
+  padding: 0 1px;
+}
+
+.prompt-num {
+  color: var(--red);
+  font-weight: 700;
+}
+
+/* Dark-stage inversion for the prompt viewer. */
+.on-dark .prompt-body {
+  color: rgba(242, 239, 232, 0.76);
+}
+
+.on-dark .prompt-h {
+  color: var(--paper);
+}
+
+.on-dark .prompt-inline-code {
+  color: var(--paper);
+  border-bottom-color: rgba(242, 239, 232, 0.4);
+}
+
+.on-dark .prompt-num {
+  color: #da291c;
+}
+
+/* --- misc ----------------------------------------------------------- */
+
+.display {
+  font-family: var(--font-sans);
+  font-weight: 700;
+  letter-spacing: -0.045em;
+  line-height: 0.94;
+}
+
+.mono-label {
+  font-size: 10px;
+  font-weight: 400;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(17, 17, 17, 0.55);
+}
+
+.panel {
+  border-top: 1px solid var(--ink);
+  background: transparent;
+}
+
+.hairline {
+  border: 1px solid var(--ink);
+}
+
+.top-glow,
+.dot-grid,
+.stage-grid {
+  background: none;
+}
+
+.animated-underline {
+  position: relative;
+  text-decoration: none;
+}
+
+.animated-underline::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  bottom: -1px;
+  left: 0;
+  height: 1px;
+  background: currentColor;
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 240ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.animated-underline:hover::after {
+  transform: scaleX(1);
+}
+
+@media (hover: none) {
+  .touch-only {
+    display: inline;
+  }
+
+  .pointer-only {
+    display: none;
+  }
+}
+
+@media (max-width: 900px) {
+  :root {
+    --page-pad: 20px;
+    --col-gap: 14px;
+    --section-space: 72px;
+  }
+}
+
+@media (max-width: 560px) {
+  :root {
+    --page-pad: 16px;
+    --col-gap: 12px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}

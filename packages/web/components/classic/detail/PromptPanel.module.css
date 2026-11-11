@@ -1,0 +1,274 @@
+.panel {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--color-line);
+  border-radius: 14px;
+  background: var(--color-surface);
+  scroll-margin-top: 160px;
+}
+
+.header {
+  display: flex;
+  min-height: 72px;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px 24px;
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--color-line);
+}
+
+.tabs,
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tabs button {
+  min-height: 44px;
+  padding: 10px 16px;
+  border-radius: 8px;
+  color: #a5a8af;
+  font-size: 14px;
+  cursor: pointer;
+  transition: color 150ms ease-out, background-color 150ms ease-out;
+}
+
+.tabs button:hover {
+  color: var(--color-ink);
+  background: #1b2027;
+}
+
+.tabs button[aria-selected="true"] {
+  color: var(--color-ink);
+  background: #252b33;
+}
+
+.export {
+  min-height: 44px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  color: #b3b8c1;
+  font-size: 13px;
+  cursor: pointer;
+  transition: color 150ms ease-out, background-color 150ms ease-out;
+}
+
+.export:hover {
+  background: #1b2027;
+  color: var(--color-ink);
+}
+
+.actions .copyButton {
+  min-height: 44px;
+  border-radius: 8px;
+  font-size: 13px;
+}
+
+.scroll {
+  max-height: 480px;
+  min-height: 220px;
+  overflow: auto;
+  padding: 24px;
+  scrollbar-width: thin;
+  scrollbar-color: #434c59 transparent;
+}
+
+.scroll:focus-visible {
+  outline-offset: -3px;
+}
+
+.scroll .promptBody {
+  max-width: 100ch;
+  margin-inline: auto;
+  color: #bcc1ca;
+  font-size: 13px;
+  line-height: 1.85;
+}
+
+.promptHeading {
+  margin-top: 12px;
+  color: var(--color-ink);
+  font-weight: 600;
+}
+
+.promptHeading:first-child {
+  margin-top: 0;
+}
+
+.blankLine {
+  height: 1em;
+}
+
+.codeBlock {
+  margin-block: 12px;
+  overflow-x: auto;
+  padding: 16px;
+  border: 1px solid #303742;
+  border-radius: 8px;
+  background: #080a0d;
+  color: #d5d9df;
+  white-space: pre;
+  font-size: 13px;
+  line-height: 1.8;
+}
+
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px 24px;
+  padding: 16px 24px;
+  border-top: 1px solid var(--color-line);
+  color: #a5a8af;
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+.stats {
+  font-variant-numeric: tabular-nums;
+}
+
+.retrofit {
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--color-line);
+}
+
+.retrofitHeading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  min-height: 44px;
+}
+
+.retrofitHeading label {
+  color: var(--color-ink);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.sourceActions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #a5a8af;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.sourceActions button {
+  min-height: 44px;
+  padding-inline: 12px;
+  border-radius: 6px;
+  color: #c8ccd3;
+  cursor: pointer;
+}
+
+.sourceActions button:hover {
+  background: #252b33;
+  color: var(--color-ink);
+}
+
+.retrofit textarea {
+  display: block;
+  width: 100%;
+  min-height: 140px;
+  max-height: 320px;
+  margin-block: 8px 12px;
+  resize: vertical;
+  padding: 14px;
+  border: 1px solid #424a56;
+  border-radius: 8px;
+  background: #080a0d;
+  color: var(--color-ink);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 1.8;
+  caret-color: var(--color-accent);
+}
+
+.retrofit textarea::placeholder {
+  color: #a5a8af;
+  opacity: 1;
+}
+
+.retrofit > p {
+  margin-top: 8px;
+  color: #a5a8af;
+  font-size: 12px;
+  line-height: 1.8;
+}
+
+.retrofit > .sourceReady {
+  color: #c0de8b;
+}
+
+.sourcePath {
+  overflow-wrap: anywhere;
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--color-line);
+  color: #b3b8c1;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+.sourceCode {
+  color: #bcc1ca;
+  font-family: var(--font-mono);
+  white-space: pre;
+  font-size: 13px;
+  line-height: 1.85;
+}
+
+.sourceNote {
+  padding: 16px 24px;
+  border-top: 1px solid var(--color-line);
+  color: #a5a8af;
+  font-size: 12px;
+  line-height: 1.8;
+}
+
+@media (max-width: 560px) {
+  .panel {
+    scroll-margin-top: 88px;
+  }
+
+  .header {
+    gap: 8px;
+    padding: 12px 16px;
+  }
+
+  .actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .scroll,
+  .retrofit {
+    padding: 20px 16px;
+  }
+
+  .footer,
+  .sourcePath,
+  .sourceNote {
+    padding: 16px;
+  }
+
+  .scroll .promptBody,
+  .sourceCode,
+  .codeBlock {
+    font-size: 13px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tabs button,
+  .export {
+    transition: none;
+  }
+}

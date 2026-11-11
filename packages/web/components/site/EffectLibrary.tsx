@@ -52,7 +52,6 @@ const copy = {
   },
 } as const;
 
-// The stage belongs to the work; navigation and card typography stay neutral.
 const stageStyles: Record<string, string> = {
   "magnetic-button": styles.stageBlue,
   "spotlight-card": styles.stageGraphite,
@@ -79,10 +78,10 @@ type CardProps = {
   locale: Locale;
   content: (typeof copy)[Locale];
   categoryLabel: string;
-  stageClass: string;
+  index: number;
 };
 
-function EffectCard({ module, locale, content, categoryLabel, stageClass }: CardProps) {
+function EffectCard({ module, locale, content, categoryLabel, index }: CardProps) {
   const { spec, Demo, buildPrompt } = module;
   const stackCount = Object.keys(spec.stacks).length;
   const prompt = useMemo(
@@ -102,7 +101,17 @@ function EffectCard({ module, locale, content, categoryLabel, stageClass }: Card
       aria-labelledby={`effect-card-${spec.slug}`}
       className={styles.card}
     >
-      <div className={`${styles.preview} ${stageClass}`}>
+      <div className={styles.cardHead}>
+        <span className={styles.cardIndex} aria-hidden>
+          {String(index + 1).padStart(2, "0")}
+        </span>
+        <span className={styles.category}>{categoryLabel}</span>
+        <span className={styles.liveMark} aria-hidden>
+          LIVE
+        </span>
+      </div>
+
+      <div className={`${styles.preview} ${stageStyles[spec.slug] ?? ""}`}>
         <div
           className={styles.demo}
           style={{
@@ -121,6 +130,7 @@ function EffectCard({ module, locale, content, categoryLabel, stageClass }: Card
             label={content.copyPrompt}
             copiedLabel={content.copied}
             failedLabel={content.copyFailed}
+            variant="ghost"
             analytics={{
               slug: spec.slug,
               surface: "library_card",
@@ -131,24 +141,23 @@ function EffectCard({ module, locale, content, categoryLabel, stageClass }: Card
           />
         </div>
       </div>
+
       <div className={styles.cardBody}>
-        <h3 id={`effect-card-${spec.slug}`}>{spec.name[locale]}</h3>
-        <p className={styles.tagline}>{spec.tagline[locale]}</p>
-        <div className={styles.cardFooter}>
-          <p className={styles.meta}>
-            {categoryLabel}
-            <span aria-hidden> · </span>
-            {stackCount} {content.stacksLabel}
-          </p>
-          <Link
-            href={`/effects/${spec.slug}`}
-            data-effect-link={spec.slug}
-            aria-label={`${content.open} ${spec.name[locale]}`}
-            className={styles.openLink}
-          >
-            {content.open}
+        <h3 id={`effect-card-${spec.slug}`}>
+          <Link href={`/effects/${spec.slug}`} data-effect-link={spec.slug}>
+            {spec.name[locale]}
+            <span className={styles.arrow} aria-hidden>
+              ↗
+            </span>
           </Link>
-        </div>
+        </h3>
+        <p className={styles.tagline}>{spec.tagline[locale]}</p>
+        <p className={styles.meta}>
+          <span>
+            {stackCount} {content.stacksLabel}
+          </span>
+          <span>{spec.category?.toUpperCase() ?? "MOTION"}</span>
+        </p>
       </div>
     </article>
   );
@@ -175,95 +184,137 @@ export function EffectLibrary() {
   }
 
   return (
-    <section id="effects" className={styles.library} aria-labelledby="effects-title">
-      <div className={styles.headingRow}>
-        <div>
-          <h2 id="effects-title" className={styles.heading}>
-            {locale === "zh" ? t.effects.label : "Effect library"}
-          </h2>
-          <p className={styles.description}>{content.description}</p>
+    <section
+      id="effects"
+      className={styles.library}
+      aria-labelledby="effects-title"
+    >
+      <div className={`shell ${styles.inner}`}>
+        <div className={styles.topline}>
+          <p>03 — {locale === "zh" ? "效果库" : "Effect library"}</p>
+          <p>
+            {String(liveModules.length).padStart(2, "0")}{" "}
+            {locale === "zh" ? "个可用效果" : "live entries"}
+          </p>
         </div>
-        <div className={styles.search} role="search">
-          <label htmlFor="effect-search" className="sr-only">{content.search}</label>
-          <input
-            id="effect-search"
-            ref={searchRef}
-            type="search"
-            name="effect-search"
-            autoComplete="off"
-            placeholder={content.placeholder}
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            aria-controls="effect-results"
-          />
-          {query && (
-            <button type="button" onClick={clearSearch}>
-              {content.clearSearch}
-            </button>
+
+        <div className={styles.headingRow}>
+          <h2 id="effects-title">{t.effects.label}</h2>
+          <div className={styles.headingAside}>
+            <p className={styles.description}>{content.description}</p>
+          </div>
+        </div>
+
+        <div className={styles.controls}>
+          <div className={styles.search} role="search">
+            <label htmlFor="effect-search">{content.search}</label>
+            <div className={styles.searchLine}>
+              <input
+                id="effect-search"
+                ref={searchRef}
+                type="search"
+                name="effect-search"
+                autoComplete="off"
+                placeholder={content.placeholder}
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+                aria-controls="effect-results"
+              />
+              <span aria-hidden>⌕</span>
+              {query && (
+                <button type="button" onClick={clearSearch}>
+                  {content.clearSearch}
+                </button>
+              )}
+            </div>
+          </div>
+
+          <div
+            className={styles.categories}
+            role="group"
+            aria-label={content.categories}
+          >
+            {effectGroups.map(({ id, label }) => (
+              <button
+                key={id}
+                type="button"
+                aria-pressed={group === id}
+                aria-controls="effect-results"
+                onClick={() => setGroup(id)}
+              >
+                <span>{label[locale]}</span>
+                <span className={styles.categoryCount}>
+                  {String(groupCounts[id]).padStart(2, "0")}
+                </span>
+              </button>
+            ))}
+          </div>
+
+          <p
+            className={styles.resultCount}
+            role="status"
+            aria-live="polite"
+            aria-atomic="true"
+          >
+            {locale === "zh"
+              ? `${modules.length} / ${liveModules.length} 个效果`
+              : `${modules.length} of ${liveModules.length} effects`}
+          </p>
+        </div>
+
+        <div id="effect-results" className={styles.results}>
+          {modules.length > 0 ? (
+            <div className={styles.grid}>
+              {modules.map((module, index) => {
+                const { spec } = module;
+                const category = effectGroups.find(
+                  ({ id }) => id === getEffectGroup(spec),
+                )!;
+                return (
+                  <EffectCard
+                    key={spec.slug}
+                    module={module}
+                    locale={locale}
+                    content={content}
+                    categoryLabel={category.label[locale]}
+                    index={index}
+                  />
+                );
+              })}
+            </div>
+          ) : (
+            <div className={styles.empty}>
+              <p className={styles.emptyIndex} aria-hidden>
+                00
+              </p>
+              <h3>{content.emptyTitle}</h3>
+              <p>{content.emptyDescription}</p>
+              <button type="button" onClick={clearFilters}>
+                {content.clearFilters}
+                <span aria-hidden>→</span>
+              </button>
+            </div>
           )}
         </div>
-      </div>
 
-      <div className={styles.filterRow}>
-        <div className={styles.categories} role="group" aria-label={content.categories}>
-          {effectGroups.map(({ id, label }) => (
-            <button
-              key={id}
-              type="button"
-              aria-pressed={group === id}
-              aria-controls="effect-results"
-              onClick={() => setGroup(id)}
-            >
-              {label[locale]}
-              <span className={styles.categoryCount}>{groupCounts[id]}</span>
+        <div className={styles.endRow}>
+          {filtered && modules.length > 0 ? (
+            <button type="button" onClick={clearFilters}>
+              {content.clearFilters}
+              <span aria-hidden>×</span>
             </button>
-          ))}
+          ) : (
+            <aside className={styles.upcoming}>
+              <span aria-hidden>04 — NEXT</span>
+              <p>{content.upcoming}</p>
+              <p>{content.upcomingName}</p>
+            </aside>
+          )}
+          <p className={styles.endMark}>
+            FEELCURVE / MOTION INDEX <span aria-hidden>↗</span>
+          </p>
         </div>
-        <p className={styles.resultCount} role="status" aria-live="polite" aria-atomic="true">
-          {locale === "zh"
-            ? `${modules.length} / ${liveModules.length} 个效果`
-            : `${modules.length} of ${liveModules.length} effects`}
-        </p>
       </div>
-
-      <div id="effect-results" className={styles.results}>
-        {modules.length > 0 ? (
-          <div className={styles.grid}>
-            {modules.map((module) => {
-              const { spec } = module;
-              const category = effectGroups.find(({ id }) => id === getEffectGroup(spec))!;
-              return (
-                <EffectCard
-                  key={spec.slug}
-                  module={module}
-                  locale={locale}
-                  content={content}
-                  categoryLabel={category.label[locale]}
-                  stageClass={stageStyles[spec.slug] ?? ""}
-                />
-              );
-            })}
-          </div>
-        ) : (
-          <div className={styles.empty}>
-            <h3>{content.emptyTitle}</h3>
-            <p>{content.emptyDescription}</p>
-            <button type="button" onClick={clearFilters}>{content.clearFilters}</button>
-          </div>
-        )}
-      </div>
-
-      {filtered && modules.length > 0 && (
-        <div className={styles.clearRow}>
-          <button type="button" onClick={clearFilters}>{content.clearFilters}</button>
-        </div>
-      )}
-      {!filtered && (
-        <aside className={styles.upcoming}>
-          <p>{content.upcoming}</p>
-          <span>{content.upcomingName}</span>
-        </aside>
-      )}
     </section>
   );
 }
