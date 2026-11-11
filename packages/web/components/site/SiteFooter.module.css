@@ -14,8 +14,8 @@
   border-bottom: 1px solid rgba(242, 239, 232, 0.34);
   padding-bottom: 9px;
   color: rgba(242, 239, 232, 0.5);
-  font-size: 9px;
-  line-height: 1.3;
+  font-size: var(--type-label);
+  line-height: 1.4;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
@@ -39,18 +39,18 @@
 
 .kicker {
   color: rgba(242, 239, 232, 0.56);
-  font-size: 9px;
-  line-height: 1.3;
+  font-size: var(--type-label);
+  line-height: 1.4;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
 .ctaCopy h2 {
   margin-top: 20px;
-  font-size: clamp(45px, 6.4vw, 110px);
+  font-size: var(--type-h2);
   font-weight: 700;
-  line-height: 0.89;
-  letter-spacing: -0.068em;
+  line-height: 1;
+  letter-spacing: -0.06em;
 }
 
 .ctaCopy h2 span {
@@ -76,7 +76,7 @@
   justify-content: space-between;
   gap: 14px;
   padding: 0 13px;
-  font-size: 10.5px;
+  font-size: var(--type-caption);
   font-weight: 700;
   line-height: 1;
 }
@@ -160,26 +160,26 @@
 
 .markLatin {
   color: rgba(242, 239, 232, 0.45);
-  font-size: 8px;
-  line-height: 1;
+  font-size: 10px;
+  line-height: 1.2;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
 .tagline {
-  max-width: 26ch;
+  max-width: 28ch;
   margin-top: 16px;
   color: rgba(242, 239, 232, 0.62);
-  font-size: 11.5px;
-  line-height: 1.55;
+  font-size: 13px;
+  line-height: 1.6;
 }
 
 .count {
   grid-column: 9 / span 4;
   max-width: 30ch;
   color: rgba(242, 239, 232, 0.44);
-  font-size: 9px;
-  line-height: 1.55;
+  font-size: var(--type-label);
+  line-height: 1.6;
   letter-spacing: 0.03em;
   text-transform: uppercase;
 }
@@ -225,9 +225,9 @@
 
 .columns h3 {
   color: rgba(242, 239, 232, 0.42);
-  font-size: 8px;
+  font-size: 10px;
   font-weight: 700;
-  line-height: 1.2;
+  line-height: 1.3;
   letter-spacing: 0.09em;
   text-transform: uppercase;
 }
@@ -243,8 +243,8 @@
 .columns a {
   display: inline-block;
   color: rgba(242, 239, 232, 0.74);
-  font-size: 10.5px;
-  line-height: 1.55;
+  font-size: 12px;
+  line-height: 1.6;
 }
 
 .columns a:hover {
@@ -253,7 +253,7 @@
 
 .columns a span {
   color: var(--red);
-  font-size: 8px;
+  font-size: 10px;
 }
 
 .effectList {
@@ -271,10 +271,10 @@
   margin-top: clamp(44px, 6vw, 88px);
   overflow: hidden;
   color: var(--paper);
-  font-size: clamp(64px, 16vw, 310px);
+  font-size: var(--type-mega);
   font-weight: 700;
-  line-height: 0.7;
-  letter-spacing: -0.09em;
+  line-height: 0.74;
+  letter-spacing: -0.085em;
   white-space: nowrap;
 }
 
@@ -287,8 +287,8 @@
   border-top: 1px solid rgba(242, 239, 232, 0.34);
   padding: 11px 0 16px;
   color: rgba(242, 239, 232, 0.4);
-  font-size: 8px;
-  line-height: 1.4;
+  font-size: var(--type-label);
+  line-height: 1.45;
   letter-spacing: 0.05em;
   text-transform: uppercase;
 }
@@ -337,7 +337,7 @@
   }
 
   .ctaCopy h2 {
-    font-size: clamp(44px, 9vw, 76px);
+    font-size: clamp(40px, 7vw, 60px);
   }
 
   .ctaActions {
@@ -397,7 +397,7 @@
 
   .ctaCopy h2 {
     margin-top: 16px;
-    font-size: clamp(40px, 11.5vw, 62px);
+    font-size: clamp(38px, 10vw, 54px);
   }
 
   .ctaActions {
@@ -421,14 +421,14 @@
 
   .bigWord {
     margin-top: 48px;
-    font-size: 16.8vw;
-    letter-spacing: -0.1em;
+    font-size: clamp(58px, 16.8vw, 88px);
+    letter-spacing: -0.09em;
   }
 
   .bottom {
     margin-top: 14px;
     padding-bottom: 13px;
-    font-size: 7.5px;
+    font-size: 10px;
   }
 }
 

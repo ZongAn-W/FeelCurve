@@ -31,9 +31,9 @@ const styles = `
     gap: 24px;
     border-bottom: 1px solid #111111;
     padding: 17px 0 9px;
-    font-size: 8px;
+    font-size: 10px;
     font-weight: 700;
-    line-height: 1.3;
+    line-height: 1.35;
     letter-spacing: .08em;
     text-transform: uppercase;
   }
@@ -50,7 +50,7 @@ const styles = `
   .number {
     grid-column: 1 / span 7;
     margin: 0;
-    font-size: clamp(112px, 24vw, 330px);
+    font-size: clamp(112px, 21vw, 300px);
     font-weight: 700;
     line-height: .72;
     letter-spacing: -.1em;
@@ -65,9 +65,9 @@ const styles = `
   }
   h1 {
     margin: 0;
-    font-size: clamp(28px, 3.2vw, 48px);
+    font-size: clamp(32px, 3.2vw, 48px);
     font-weight: 700;
-    line-height: .98;
+    line-height: 1.02;
     letter-spacing: -.05em;
   }
   h1 span { display: block; }
@@ -75,7 +75,7 @@ const styles = `
     max-width: 34ch;
     margin: 18px 0 0;
     color: rgba(17,17,17,.62);
-    font-size: 11.5px;
+    font-size: 14px;
     line-height: 1.8;
   }
   .actions {
@@ -90,15 +90,15 @@ const styles = `
     justify-content: space-between;
     border: 1px solid #111111;
     padding: 10px 12px;
-    font-size: 9px;
+    font-size: 12px;
     font-weight: 700;
     line-height: 1.2;
-    letter-spacing: .04em;
+    letter-spacing: .03em;
     text-transform: uppercase;
   }
   .actions a:first-child { background: #da291c; color: #f2efe8; }
   .actions a:last-child { background: #111111; color: #f2efe8; }
-  .actions a span { font-size: 13px; font-weight: 400; }
+  .actions a span { font-size: 14px; font-weight: 400; }
   .bottom {
     display: flex;
     flex-wrap: wrap;
@@ -107,7 +107,7 @@ const styles = `
     border-top: 1px solid #111111;
     padding: 12px 0 18px;
     color: rgba(17,17,17,.46);
-    font-size: 8px;
+    font-size: 10px;
     letter-spacing: .08em;
     text-transform: uppercase;
   }
