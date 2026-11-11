@@ -106,7 +106,6 @@ export function AccountMenu({ user }: { user: AuthUser }) {
             className={styles.logout}
           >
             {pending ? t.auth.submitting : t.auth.logout}
-            <span aria-hidden>↗</span>
           </button>
         </div>
       ) : null}

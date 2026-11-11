@@ -93,7 +93,6 @@ export function FaqSection() {
               {content.note}{" "}
               <a href={REPO_ISSUES} target="_blank" rel="noreferrer noopener">
                 {content.link}
-                <span aria-hidden> ↗</span>
               </a>
             </p>
           </header>

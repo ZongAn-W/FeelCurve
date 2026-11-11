@@ -83,11 +83,9 @@ export function SiteFooter() {
           <div className={styles.ctaActions}>
             <Link href={`/effects/${FIRST_EFFECT}`} className={styles.primary}>
               <span>{content.ctaPrimary}</span>
-              <span aria-hidden>↗</span>
             </Link>
             <a href="/#effects" className={styles.secondary}>
               <span>{content.ctaSecondary}</span>
-              <span aria-hidden>↓</span>
             </a>
           </div>
         </div>
@@ -151,7 +149,6 @@ export function SiteFooter() {
                 <li key={item.label}>
                   <a href={item.href} target="_blank" rel="noreferrer noopener">
                     {item.label}
-                    <span aria-hidden> ↗</span>
                   </a>
                 </li>
               ))}
@@ -164,7 +161,6 @@ export function SiteFooter() {
               <li>
                 <Link href="/classic" className={styles.versionLink}>
                   {locale === "zh" ? "经典版界面" : "Classic interface"}
-                  <span aria-hidden> ↗</span>
                 </Link>
               </li>
               <li>

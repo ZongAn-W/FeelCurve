@@ -86,18 +86,8 @@
   color: var(--ink);
 }
 
-.primary span:last-child,
-.secondary span:last-child {
-  color: var(--red);
-  font-weight: 400;
-}
-
 .primary:hover {
   background: var(--red);
-  color: var(--paper);
-}
-
-.primary:hover span:last-child {
   color: var(--paper);
 }
 
@@ -110,10 +100,6 @@
   border-color: var(--paper);
   background: var(--paper);
   color: var(--ink);
-}
-
-.secondary:hover span:last-child {
-  color: var(--red);
 }
 
 .main {

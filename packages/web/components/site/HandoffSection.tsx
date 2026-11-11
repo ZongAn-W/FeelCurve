@@ -25,7 +25,7 @@ const copy = {
       {
         name: "Lovable / v0",
         desc: "对话里生成，直接看可交互预览。",
-        lines: ["You: magnetic button, 140px field, 16px pull", "AI: added MagneticButton.tsx", "Preview updated ↗"],
+        lines: ["You: magnetic button, 140px field, 16px pull", "AI: added MagneticButton.tsx", "Preview updated"],
       },
     ],
     cta: "看一个完整示例",
@@ -49,7 +49,7 @@ const copy = {
       {
         name: "Lovable / v0",
         desc: "Generate in chat and watch the live preview.",
-        lines: ["You: magnetic button, 140px field, 16px pull", "AI: added MagneticButton.tsx", "Preview updated ↗"],
+        lines: ["You: magnetic button, 140px field, 16px pull", "AI: added MagneticButton.tsx", "Preview updated"],
       },
     ],
     cta: "Open a full example",
@@ -138,7 +138,6 @@ export function HandoffSection() {
           <p>{content.ctaHint}</p>
           <Link href={`/effects/${FEATURED}`} className={styles.cta}>
             <span>{content.cta}</span>
-            <span aria-hidden>↗</span>
           </Link>
         </div>
       </div>

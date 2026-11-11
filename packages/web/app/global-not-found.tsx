@@ -147,10 +147,10 @@ export default function GlobalNotFound() {
               </p>
               <div className="actions">
                 <a href="/">
-                  新版首页 <span aria-hidden="true">↗</span>
+                  新版首页
                 </a>
                 <a href="/classic">
-                  经典版首页 <span aria-hidden="true">↗</span>
+                  经典版首页
                 </a>
               </div>
             </div>
@@ -158,7 +158,7 @@ export default function GlobalNotFound() {
 
           <div className="bottom">
             <span>FEELCURVE / 404</span>
-            <span>MOTION → PROMPT / 2026</span>
+            <span>MOTION / PROMPT / 2026</span>
           </div>
         </main>
       </body>
