@@ -20,8 +20,8 @@
   border-bottom: 1px solid var(--ink);
   padding-bottom: 9px;
   color: rgba(17, 17, 17, 0.48);
-  font-size: 8.5px;
-  line-height: 1.4;
+  font-size: 10px;
+  line-height: 1.35;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
@@ -48,17 +48,17 @@
 
 .head h1 {
   margin-top: 14px;
-  font-size: clamp(54px, 6.4vw, 104px);
+  font-size: var(--type-h2);
   font-weight: 700;
-  line-height: 0.86;
-  letter-spacing: -0.07em;
+  line-height: 1.02;
+  letter-spacing: -0.06em;
 }
 
 .head h1 span {
   display: block;
   margin-top: 12px;
   color: var(--red);
-  font-size: 0.22em;
+  font-size: 0.26em;
   font-weight: 700;
   line-height: 1.2;
   letter-spacing: 0.02em;
@@ -67,7 +67,7 @@
 .updated {
   margin-top: 22px;
   color: rgba(17, 17, 17, 0.46);
-  font-size: 9px;
+  font-size: 10px;
   line-height: 1.6;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -89,7 +89,7 @@
   border-bottom: 1px solid rgba(17, 17, 17, 0.24);
   padding-bottom: 6px;
   color: var(--ink);
-  font-size: 10px;
+  font-size: var(--type-caption);
   font-weight: 700;
   line-height: 1.4;
 }
@@ -111,7 +111,7 @@
   border-bottom: 1px solid var(--ink);
   padding-bottom: 24px;
   color: rgba(17, 17, 17, 0.72);
-  font-size: 13px;
+  font-size: var(--type-body);
   line-height: 1.8;
 }
 
@@ -135,7 +135,7 @@
 .sectionNum {
   padding-top: 3px;
   color: var(--red);
-  font-size: 8px;
+  font-size: 10px;
   font-weight: 700;
   line-height: 1.4;
   letter-spacing: 0.05em;
@@ -143,7 +143,7 @@
 
 .section h2 {
   color: var(--ink);
-  font-size: 15px;
+  font-size: 18px;
   font-weight: 700;
   line-height: 1.4;
   letter-spacing: -0.015em;
@@ -153,7 +153,7 @@
   max-width: 72ch;
   margin-top: 10px;
   color: rgba(17, 17, 17, 0.64);
-  font-size: 12px;
+  font-size: var(--type-body);
   line-height: 1.85;
 }
 
@@ -164,7 +164,7 @@
   margin-top: 12px;
   padding: 0;
   color: rgba(17, 17, 17, 0.64);
-  font-size: 12px;
+  font-size: var(--type-body);
   line-height: 1.85;
   list-style: none;
 }
@@ -180,7 +180,7 @@
   left: 0;
   color: var(--red);
   content: "—";
-  font-size: 9px;
+  font-size: 10px;
   line-height: 1.85;
 }
 
@@ -189,7 +189,7 @@
   padding: 1px 4px;
   color: var(--ink);
   font-family: var(--font-sans);
-  font-size: 10.5px;
+  font-size: 11.5px;
   font-weight: 700;
   white-space: nowrap;
 }
@@ -215,7 +215,7 @@
   border-top: 1px solid var(--ink);
   padding-top: 14px;
   color: rgba(17, 17, 17, 0.48);
-  font-size: 9px;
+  font-size: 10px;
   line-height: 1.6;
 }
 
@@ -244,7 +244,7 @@
   }
 
   .head h1 {
-    font-size: clamp(58px, 15vw, 92px);
+    font-size: var(--type-h2);
   }
 
   .updated {
@@ -270,7 +270,7 @@
   }
 
   .head h1 {
-    font-size: clamp(56px, 19vw, 92px);
+    font-size: var(--type-h2);
   }
 
   .backlinks {
@@ -284,12 +284,12 @@
   }
 
   .section h2 {
-    font-size: 14px;
+    font-size: 17px;
   }
 
   .intro,
   .body p,
   .list {
-    font-size: 11.5px;
+    font-size: var(--type-body);
   }
 }
