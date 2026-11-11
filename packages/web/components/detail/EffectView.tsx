@@ -24,6 +24,7 @@ import {
   type Variant,
 } from "@/content/effects/types";
 import { writeTextToClipboard } from "@/lib/clipboard";
+import { demoSurface } from "@/lib/demo-surface";
 import {
   buildEffectPath,
   buildEffectUrl,
@@ -337,7 +338,10 @@ function EffectWorkbench({ module, sourceCode }: { module: EffectModule; sourceC
               <h2 id="preview-title">{locale === "zh" ? "实时预览" : "Live preview"}</h2>
               <span>{categoryLabel}</span>
             </div>
-            <div className={`${styles.stage} ${spec.slug === "magnetic-button" ? styles.stageBlue : ""}`}>
+            <div
+              className={`${styles.stage} swissDemo`}
+              data-surface={demoSurface(spec.slug)}
+            >
               <Demo params={params} locale={locale} />
             </div>
             <div className={styles.previewFooter}>

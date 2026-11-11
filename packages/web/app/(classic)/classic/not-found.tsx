@@ -21,7 +21,7 @@ export default function NotFound() {
 
       <header className="relative z-10 mx-auto flex h-16 w-full max-w-[1240px] items-center px-5 sm:px-6">
         <a
-          href="/"
+          href="/classic"
           aria-label="FeelCurve 首页"
           className="flex min-h-11 items-center gap-2.5 rounded-sm"
         >
@@ -56,7 +56,7 @@ export default function NotFound() {
 
           <div className="mt-9 flex flex-col gap-3 min-[420px]:flex-row">
             <a
-              href="/"
+              href="/classic"
               className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-accent px-5 text-[13px] font-semibold text-[#0A0B08] transition-colors hover:bg-[#d8ff79] motion-reduce:transition-none"
             >
               回首页
@@ -71,7 +71,7 @@ export default function NotFound() {
               </svg>
             </a>
             <a
-              href="/#effects"
+              href="/classic#effects"
               className="hairline inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-white/[0.02] px-5 text-[13px] font-medium text-ink transition-colors hover:bg-white/[0.06] motion-reduce:transition-none"
             >
               逛效果库

@@ -9,6 +9,7 @@
     "dev:web": "npm run dev --workspace @feelcurve/web",
     "dev:api": "npm run start:dev --workspace @feelcurve/api",
     "build:web": "npm run build --workspace @feelcurve/web",
-    "build:api": "npm run build --workspace @feelcurve/api"
+    "build:api": "npm run build --workspace @feelcurve/api",
+    "db:push": "npm run prisma:push --workspace @feelcurve/api"
   }
 }

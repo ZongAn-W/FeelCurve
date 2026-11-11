@@ -51,9 +51,14 @@ const COPY: Record<Locale, Copy> = {
 type StaggerListDemoProps = {
   params: Params;
   locale: Locale;
+  compact?: boolean;
 };
 
-export function StaggerListDemo({ params, locale }: StaggerListDemoProps) {
+export function StaggerListDemo({
+  params,
+  locale,
+  compact = false,
+}: StaggerListDemoProps) {
   const stagger = readNumber(params, "stagger", STAGGER_LIST.defaults.stagger);
   const duration = readNumber(params, "duration", STAGGER_LIST.defaults.duration);
   const rise = readNumber(params, "rise", STAGGER_LIST.defaults.rise);
@@ -64,31 +69,37 @@ export function StaggerListDemo({ params, locale }: StaggerListDemoProps) {
   const [run, setRun] = useState(0);
 
   return (
-    <div data-demo="stagger-list" className="w-[340px] max-w-full">
-      <div className="panel p-4">
-        <div className="flex items-start justify-between gap-4">
-          <div className="min-w-0">
-            <p className="font-mono text-[9.5px] uppercase tracking-[0.16em] text-[#6a6d74]">
-              {copy.label}
-            </p>
-            <p className="mt-1 text-[13px] font-medium text-[#edeef0]">
-              {copy.title}
-            </p>
-            <p className="mt-1 font-mono text-[10px] text-[#6a6d74]">
-              {`${stagger}ms · ${duration}ms · ${rise}px · cap ${cap}`}
-            </p>
+    <div
+      data-demo="stagger-list"
+      data-compact={compact || undefined}
+      className="w-[340px] max-w-full"
+    >
+      <div className={compact ? "" : "panel p-4"}>
+        {!compact && (
+          <div className="flex items-start justify-between gap-4">
+            <div className="min-w-0">
+              <p className="font-mono text-[9.5px] uppercase tracking-[0.16em] text-[#6a6d74]">
+                {copy.label}
+              </p>
+              <p className="mt-1 text-[13px] font-medium text-[#edeef0]">
+                {copy.title}
+              </p>
+              <p className="mt-1 font-mono text-[10px] text-[#6a6d74]">
+                {`${stagger}ms · ${duration}ms · ${rise}px · cap ${cap}`}
+              </p>
+            </div>
+            <button
+              type="button"
+              data-replay="stagger-list"
+              onClick={() => setRun((value) => value + 1)}
+              className="shrink-0 rounded-full border border-white/15 px-3 py-1.5 text-[11px] font-medium text-[#9a9ca1] transition-colors hover:border-[#c9f45a]/60 hover:text-[#c9f45a]"
+            >
+              {copy.replay}
+            </button>
           </div>
-          <button
-            type="button"
-            data-replay="stagger-list"
-            onClick={() => setRun((value) => value + 1)}
-            className="shrink-0 rounded-full border border-white/15 px-3 py-1.5 text-[11px] font-medium text-[#9a9ca1] transition-colors hover:border-[#c9f45a]/60 hover:text-[#c9f45a]"
-          >
-            {copy.replay}
-          </button>
-        </div>
+        )}
 
-        <div className="mt-3">
+        <div className={compact ? "" : "mt-3"}>
           <StaggerList
             key={`${run}-${stagger}-${duration}-${rise}-${cap}`}
             items={copy.items}
@@ -99,9 +110,11 @@ export function StaggerListDemo({ params, locale }: StaggerListDemoProps) {
             label={copy.title}
           />
         </div>
-        <p className="mt-2.5 font-mono text-[10px] text-[#6a6d74]">
-          {copy.note}
-        </p>
+        {!compact && (
+          <p className="mt-2.5 font-mono text-[10px] text-[#6a6d74]">
+            {copy.note}
+          </p>
+        )}
       </div>
     </div>
   );

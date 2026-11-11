@@ -9,9 +9,14 @@ import type { Locale } from "@/lib/i18n";
 type JellyToggleDemoProps = {
   params: Params;
   locale: Locale;
+  compact?: boolean;
 };
 
-export function JellyToggleDemo({ params, locale }: JellyToggleDemoProps) {
+export function JellyToggleDemo({
+  params,
+  locale,
+  compact = false,
+}: JellyToggleDemoProps) {
   const duration = readNumber(params, "duration", JELLY.defaults.duration);
   const stretch = readNumber(params, "stretch", JELLY.defaults.stretch);
   const maxStretch = readNumber(params, "maxStretch", JELLY.defaults.maxStretch);
@@ -23,7 +28,12 @@ export function JellyToggleDemo({ params, locale }: JellyToggleDemoProps) {
   return (
     <div
       data-demo="jelly-toggle"
-      className="mx-auto flex min-h-[280px] w-full max-w-[360px] flex-col items-center justify-center gap-8 px-6 py-10"
+      data-compact={compact || undefined}
+      className={
+        compact
+          ? "flex w-full flex-col items-center justify-center gap-6 px-6 py-8"
+          : "mx-auto flex min-h-[280px] w-full max-w-[360px] flex-col items-center justify-center gap-8 px-6 py-10"
+      }
     >
       <div className="flex flex-col items-center gap-5">
         <JellyToggle
@@ -43,18 +53,20 @@ export function JellyToggleDemo({ params, locale }: JellyToggleDemoProps) {
         </p>
       </div>
 
-      <div className="flex max-w-[300px] flex-col gap-2 text-center">
-        <p className="text-[12px] leading-relaxed text-muted">
-          {zh
-            ? "按住滑块左右拖动：它会像果冻一样被拉长压扁，松手弹到最近一侧；轻点一下也能切换。"
-            : "Press and drag the knob: it stretches and squashes like jelly, then springs to the nearest side. A quick tap toggles it as well."}
-        </p>
-        <p className="mono-label">
-          {zh
-            ? "Tab 聚焦 · Space / Enter 切换"
-            : "Tab to focus · Space / Enter to toggle"}
-        </p>
-      </div>
+      {!compact && (
+        <div className="flex max-w-[300px] flex-col gap-2 text-center">
+          <p className="text-[12px] leading-relaxed text-muted">
+            {zh
+              ? "按住滑块左右拖动：它会像果冻一样被拉长压扁，松手弹到最近一侧；轻点一下也能切换。"
+              : "Press and drag the knob: it stretches and squashes like jelly, then springs to the nearest side. A quick tap toggles it as well."}
+          </p>
+          <p className="mono-label">
+            {zh
+              ? "Tab 聚焦 · Space / Enter 切换"
+              : "Tab to focus · Space / Enter to toggle"}
+          </p>
+        </div>
+      )}
     </div>
   );
 }

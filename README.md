@@ -5,7 +5,7 @@
 Monorepo 结构（npm workspaces）：
 
 - `packages/web` — Next.js 前端（动效展示站）
-- `packages/api` — NestJS 后端（为用户上传、登录等扩展预留）
+- `packages/api` — NestJS 后端（登录接口；后续可扩展上传等）
 
 ## 本地开发
 
@@ -14,6 +14,31 @@ npm install
 npm run dev:web    # http://localhost:3000
 npm run dev:api    # http://localhost:3001
 ```
+
+## 登录与账号（可选）
+
+`packages/api` 提供邮箱密码和 GitHub OAuth 登录，前端页面为 `/login`、`/register`；不登录仍可浏览、调参和复制。登录态使用 httpOnly Cookie（`fc_session`，7 天），密码以 bcrypt 哈希保存。
+
+接口：
+
+- `POST /api/auth/register`、`POST /api/auth/login`、`POST /api/auth/logout`、`GET /api/auth/me`
+- `GET /api/auth/github`、`GET /api/auth/github/callback`
+
+### 本地配置
+
+1. 复制 `packages/api/.env.example` 为 `packages/api/.env`，至少填入 `JWT_SECRET`；需要 GitHub 登录时再填 OAuth App 的 Client ID/Secret。
+2. 初始化 SQLite 数据库（schema 变化后重新执行）：
+
+   ```bash
+   npm run db:push
+   ```
+
+3. 可选：复制 `packages/web/.env.example` 为 `packages/web/.env.local`。默认 API 地址已是 `http://localhost:3001`，本地通常不用改。
+4. 分别启动 `npm run dev:api` 和 `npm run dev:web`。
+
+GitHub OAuth App 的 Authorization callback URL 填 `http://localhost:3001/api/auth/github/callback`。本地不配置 GitHub 也能使用邮箱登录；生产环境把 `WEB_APP_URL`、`API_PUBLIC_URL`、`CORS_ORIGIN` 改成实际 HTTPS 地址，重新生成 `JWT_SECRET`，并在构建前端时设置 `NEXT_PUBLIC_API_URL`（默认值只适用于本地）。生产建议让 API 与站点同源，或放在同一可注册域名的子域下，否则 `SameSite=Lax` 的会话 Cookie 不会被发送。
+
+当前边界：尚无邮箱验证、找回密码、账号自助删除和登录限流；退出只清除浏览器 Cookie，已签发的 JWT 在 7 天内仍然有效。上线公网前建议补登录限流，并评估缩短会话有效期。
 
 ## 更新服务器网站
 

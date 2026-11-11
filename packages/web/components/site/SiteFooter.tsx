@@ -13,7 +13,7 @@ const FIRST_EFFECT = liveModules[0]?.spec.slug ?? "magnetic-button";
 const copy = {
   zh: {
     kicker: "挑一个手感",
-    title: "带走一个，跑起来看看",
+    title: "带走一个，\n跑起来看看",
     ctaPrimary: "打开磁吸按钮",
     ctaSecondary: "浏览全部效果",
     tagline: "看得上的动效，复制成提示词。",
@@ -36,7 +36,7 @@ const copy = {
   },
   en: {
     kicker: "PICK A FEEL",
-    title: "Take one and see it run",
+    title: "Take one and\nsee it run",
     ctaPrimary: "Open Magnetic Button",
     ctaSecondary: "Browse all effects",
     tagline: "Motion you love, copied as a prompt.",
@@ -65,43 +65,61 @@ export function SiteFooter() {
 
   return (
     <footer className={styles.footer}>
-      <div className={styles.ctaBand}>
-        <div className={styles.ctaInner}>
-          <div>
+      <div className={`shell ${styles.ctaBand}`}>
+        <div className={styles.topline}>
+          <p>06 — {locale === "zh" ? "收尾" : "End"}</p>
+          <p>ZÜRICH / SHANGHAI — 2026</p>
+        </div>
+
+        <div className={styles.ctaGrid}>
+          <div className={styles.ctaCopy}>
             <p className={styles.kicker}>{content.kicker}</p>
-            <h2>{content.title}</h2>
+            <h2>
+              {content.title.split("\n").map((line) => (
+                <span key={line}>{line}</span>
+              ))}
+            </h2>
           </div>
           <div className={styles.ctaActions}>
             <Link href={`/effects/${FIRST_EFFECT}`} className={styles.primary}>
-              {content.ctaPrimary}
+              <span>{content.ctaPrimary}</span>
+              <span aria-hidden>↗</span>
             </Link>
             <a href="/#effects" className={styles.secondary}>
-              {content.ctaSecondary}
+              <span>{content.ctaSecondary}</span>
+              <span aria-hidden>↓</span>
             </a>
           </div>
         </div>
       </div>
 
-      <div className={styles.main}>
-        <div className={styles.brand}>
-          <Link href="/" className={styles.mark} aria-label={SITE_NAME}>
-            <span className={styles.markDots} aria-hidden>
-              <i />
-              <i />
-              <i />
-            </span>
-            <span>{locale === "zh" ? "手感" : "FeelCurve"}</span>
-            <span className={styles.markLatin}>{locale === "zh" ? "FEELCURVE" : "手感"}</span>
-          </Link>
-          <p>{content.tagline}</p>
+      <div className={`shell ${styles.main}`}>
+        <div className={styles.brandRow}>
+          <div className={styles.brand}>
+            <Link href="/" className={styles.mark} aria-label={SITE_NAME}>
+              <span className={styles.markSquare} aria-hidden>
+                F
+              </span>
+              <span className={styles.markName}>
+                {locale === "zh" ? "手感" : "FeelCurve"}
+              </span>
+              <span className={styles.markLatin}>
+                {locale === "zh" ? "FEELCURVE" : "手感"}
+              </span>
+            </Link>
+            <p className={styles.tagline}>{content.tagline}</p>
+          </div>
+
           <p className={styles.count}>
-            {liveModules.length} {locale === "zh" ? "个效果" : "effects"} · 4{" "}
-            {locale === "zh" ? "种技术栈" : "stacks"} · 2{" "}
-            {locale === "zh" ? "种语言" : "languages"}
+            <span>{String(liveModules.length).padStart(2, "0")}</span>
+            {locale === "zh" ? "个效果 / 04 种技术栈 / 02 种语言" : "effects / 04 stacks / 02 languages"}
           </p>
         </div>
 
-        <nav className={styles.columns} aria-label={locale === "zh" ? "页脚导航" : "Footer navigation"}>
+        <nav
+          className={styles.columns}
+          aria-label={locale === "zh" ? "页脚导航" : "Footer navigation"}
+        >
           <div className={styles.effectColumn}>
             <h3>{content.columns.effects}</h3>
             <ul className={styles.effectList}>
@@ -133,6 +151,7 @@ export function SiteFooter() {
                 <li key={item.label}>
                   <a href={item.href} target="_blank" rel="noreferrer noopener">
                     {item.label}
+                    <span aria-hidden> ↗</span>
                   </a>
                 </li>
               ))}
@@ -143,32 +162,54 @@ export function SiteFooter() {
             <h3>{content.columns.about}</h3>
             <ul>
               <li>
+                <Link href="/classic" className={styles.versionLink}>
+                  {locale === "zh" ? "经典版界面" : "Classic interface"}
+                  <span aria-hidden> ↗</span>
+                </Link>
+              </li>
+              <li>
                 <Link href="/privacy">{content.privacy}</Link>
               </li>
               <li>
-                <a href={`${REPO_URL}/blob/main/LICENSE`} target="_blank" rel="noreferrer noopener">
+                <a
+                  href={`${REPO_URL}/blob/main/LICENSE`}
+                  target="_blank"
+                  rel="noreferrer noopener"
+                >
                   {content.license}
                 </a>
               </li>
               <li>
-                <a href={`${REPO_URL}/blob/main/LICENSE-CONTENT`} target="_blank" rel="noreferrer noopener">
+                <a
+                  href={`${REPO_URL}/blob/main/LICENSE-CONTENT`}
+                  target="_blank"
+                  rel="noreferrer noopener"
+                >
                   {content.contentLicense}
                 </a>
               </li>
               <li>
-                <a href={ICP_LICENSE_URL} target="_blank" rel="noreferrer noopener">
+                <a
+                  href={ICP_LICENSE_URL}
+                  target="_blank"
+                  rel="noreferrer noopener"
+                >
                   {ICP_LICENSE}
                 </a>
               </li>
             </ul>
           </div>
         </nav>
-      </div>
 
-      <div className={styles.bottom}>
-        <span>© 2026 {SITE_NAME}</span>
-        <span>{content.note}</span>
-        <span>{content.built}</span>
+        <p className={styles.bigWord} aria-hidden>
+          FEELCURVE
+        </p>
+
+        <div className={styles.bottom}>
+          <span>© 2026 {SITE_NAME}</span>
+          <span>{content.note}</span>
+          <span>{content.built}</span>
+        </div>
       </div>
     </footer>
   );

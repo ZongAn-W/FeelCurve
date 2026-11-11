@@ -14,7 +14,7 @@ const copy = {
     items: [
       {
         q: "免费吗？需要登录吗？",
-        a: "免费，不用登录，复制次数不限。所有效果、参数和提示词都在浏览器里生成。",
+        a: "免费，复制次数不限，不登录也能用。登录是可选的，目前用于识别账号和保持登录状态，不会限制复制。所有效果、参数和提示词都在浏览器里生成。",
       },
       {
         q: "复制完之后怎么用？",
@@ -42,7 +42,7 @@ const copy = {
     items: [
       {
         q: "Is it free? Do I need an account?",
-        a: "Free, no account, no copy limit. Every effect, parameter and prompt is generated in your browser.",
+        a: "Free, with no copy limit — no account required. Signing in is optional; it currently identifies your account and keeps you signed in, and never limits copying. Every effect, parameter and prompt is generated in your browser.",
       },
       {
         q: "What do I do after copying?",
@@ -70,32 +70,48 @@ export function FaqSection() {
 
   return (
     <section id="faq" className={styles.section} aria-labelledby="faq-title">
-      <div className={styles.inner}>
-        <header className={styles.head}>
-          <p className={styles.kicker}>{content.kicker}</p>
-          <h2 id="faq-title">
-            {content.title.split("\n").map((line) => (
-              <span key={line}>{line}</span>
-            ))}
-          </h2>
-          <p className={styles.note}>
-            {content.note}{" "}
-            <a href={REPO_ISSUES} target="_blank" rel="noreferrer noopener">
-              {content.link}
-            </a>
+      <div className={`shell ${styles.inner}`}>
+        <div className={styles.topline}>
+          <p>05 — {content.kicker}</p>
+          <p>
+            {String(content.items.length).padStart(2, "0")} QUESTIONS /{" "}
+            {String(content.items.length).padStart(2, "0")} ANSWERS
           </p>
-        </header>
+        </div>
 
-        <div className={styles.items}>
-          {content.items.map((item) => (
-            <details key={item.q} className={styles.item}>
-              <summary>
-                <span>{item.q}</span>
-                <span className={styles.plus} aria-hidden />
-              </summary>
-              <p>{item.a}</p>
-            </details>
-          ))}
+        <div className={styles.layout}>
+          <header
+            className={`${styles.head} ${locale === "en" ? styles.headEnglish : ""}`}
+          >
+            <p className={styles.kicker}>{content.kicker}</p>
+            <h2 id="faq-title">
+              {content.title.split("\n").map((line) => (
+                <span key={line}>{line}</span>
+              ))}
+            </h2>
+            <p className={styles.note}>
+              {content.note}{" "}
+              <a href={REPO_ISSUES} target="_blank" rel="noreferrer noopener">
+                {content.link}
+                <span aria-hidden> ↗</span>
+              </a>
+            </p>
+          </header>
+
+          <div className={styles.items}>
+            {content.items.map((item, index) => (
+              <details key={item.q} className={styles.item}>
+                <summary>
+                  <span className={styles.itemIndex} aria-hidden>
+                    {String(index + 1).padStart(2, "0")}
+                  </span>
+                  <span className={styles.question}>{item.q}</span>
+                  <span className={styles.plus} aria-hidden />
+                </summary>
+                <p>{item.a}</p>
+              </details>
+            ))}
+          </div>
         </div>
       </div>
     </section>

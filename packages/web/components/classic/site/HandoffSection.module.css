@@ -1,0 +1,255 @@
+.section {
+  padding: 80px 0 88px;
+}
+
+.inner {
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+.head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 32px;
+  margin-bottom: 36px;
+}
+
+.kicker {
+  margin-bottom: 14px;
+  color: #8d949e;
+  font-size: 11.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.head h2 {
+  font-family: var(--font-feelcurve-display), var(--font-sans);
+  font-size: clamp(30px, 3.4vw, 46px);
+  font-weight: 500;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+}
+
+.head h2 span {
+  display: block;
+}
+
+.subtitle {
+  max-width: 34ch;
+  color: #a5a8af;
+  font-size: 14px;
+  line-height: 1.8;
+  text-align: right;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px;
+}
+
+.card {
+  min-width: 0;
+}
+
+.card h3 {
+  margin-top: 16px;
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.card > p {
+  margin-top: 6px;
+  color: #8d949e;
+  font-size: 12.5px;
+  line-height: 1.7;
+}
+
+.mock {
+  display: flex;
+  min-height: 190px;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  padding: 20px;
+  border: 1px solid rgb(255 255 255 / 8%);
+  border-radius: 16px;
+  background: #101318;
+}
+
+.mock0 {
+  background: linear-gradient(160deg, #161b22, #0e1116 70%);
+}
+
+.mock1 {
+  background: linear-gradient(160deg, #1a1f2b, #12141b 70%);
+}
+
+.mock2 {
+  background: linear-gradient(160deg, #221b2a, #131016 70%);
+}
+
+.terminal,
+.diff,
+.chat {
+  width: 100%;
+  max-width: 280px;
+}
+
+.terminal {
+  padding: 16px;
+  border: 1px solid rgb(255 255 255 / 8%);
+  border-radius: 10px;
+  background: rgb(0 0 0 / 35%);
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 10.5px;
+  line-height: 1.9;
+  color: #b9bfc9;
+}
+
+.terminal p:first-child {
+  color: #e6e8ec;
+}
+
+.ok {
+  color: #c4ef7c;
+}
+
+.diff {
+  padding: 16px;
+  border: 1px solid rgb(255 255 255 / 10%);
+  border-radius: 10px;
+  background: #0b0e13;
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 10px;
+  line-height: 1.8;
+}
+
+.diffFile {
+  color: #d7dbe2;
+}
+
+.diffStat {
+  color: #8fce7a;
+}
+
+.diffHunk {
+  color: #7e8794;
+}
+
+.diffPill {
+  display: inline-flex;
+  margin-top: 12px;
+  padding: 4px 10px;
+  border: 1px solid rgb(255 255 255 / 12%);
+  border-radius: 999px;
+  color: #c6ccd4;
+  font-family: var(--font-sans);
+  font-size: 10px;
+}
+
+.chat {
+  display: grid;
+  gap: 8px;
+  font-size: 10.5px;
+  line-height: 1.6;
+}
+
+.bubbleUser,
+.bubbleAi {
+  max-width: 92%;
+  padding: 9px 11px;
+  border-radius: 10px;
+}
+
+.bubbleUser {
+  justify-self: end;
+  border: 1px solid rgb(255 255 255 / 10%);
+  background: rgb(255 255 255 / 6%);
+  color: #d7dbe2;
+}
+
+.bubbleAi {
+  background: rgb(196 239 124 / 10%);
+  border: 1px solid rgb(196 239 124 / 22%);
+  color: #e8efdb;
+}
+
+.chatStatus {
+  color: #9aa1ab;
+  font-size: 10px;
+}
+
+.ctaRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  margin-top: 32px;
+  padding-top: 24px;
+  border-top: 1px solid var(--color-line);
+}
+
+.ctaRow p {
+  color: #8d949e;
+  font-size: 12.5px;
+}
+
+.cta {
+  display: inline-flex;
+  min-height: 40px;
+  align-items: center;
+  gap: 8px;
+  padding: 0 14px;
+  border: 1px solid #3a404a;
+  border-radius: 8px;
+  color: var(--color-ink);
+  font-size: 12.5px;
+  transition: border-color 160ms ease-out, background 160ms ease-out;
+}
+
+.cta:hover {
+  border-color: #6d7682;
+  background: rgb(255 255 255 / 4%);
+}
+
+@media (max-width: 900px) {
+  .section {
+    padding: 72px 0 64px;
+  }
+
+  .inner {
+    padding: 0 20px;
+  }
+
+  .head {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+    margin-bottom: 28px;
+  }
+
+  .subtitle {
+    max-width: none;
+    text-align: left;
+  }
+
+  .grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 24px;
+  }
+
+  .ctaRow {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 14px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cta {
+    transition: none;
+  }
+}

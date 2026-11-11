@@ -63,48 +63,73 @@ export function HandoffSection() {
 
   return (
     <section className={styles.section} aria-labelledby="handoff-title">
-      <div className={styles.inner}>
+      <div className={`shell ${styles.inner}`}>
+        <div className={styles.topline}>
+          <p>04 — {locale === "zh" ? "交付" : "Handoff"}</p>
+          <p>CLAUDE CODE / CURSOR / V0</p>
+        </div>
+
         <header className={styles.head}>
-          <div>
-            <p className={styles.kicker}>{content.kicker}</p>
-            <h2 id="handoff-title">
-              {content.title.split("\n").map((line) => (
-                <span key={line}>{line}</span>
-              ))}
-            </h2>
+          <div className={styles.kicker}>
+            <p>{content.kicker}</p>
+            <p className={styles.kickerIndex} aria-hidden>
+              [ 03 × 01 ]
+            </p>
           </div>
+          <h2 id="handoff-title">
+            {content.title.split("\n").map((line) => (
+              <span key={line}>{line}</span>
+            ))}
+          </h2>
           <p className={styles.subtitle}>{content.subtitle}</p>
         </header>
 
         <div className={styles.grid}>
           {content.cards.map((card, index) => (
             <article key={card.name} className={styles.card}>
-              <div className={`${styles.mock} ${styles[`mock${index}` as "mock0" | "mock1" | "mock2"]}`}>
+              <div className={styles.cardTop}>
+                <span>{String(index + 1).padStart(2, "0")}</span>
+                <h3>{card.name}</h3>
+              </div>
+
+              <div className={styles.mock}>
                 {index === 0 && (
                   <div className={styles.terminal}>
+                    <p className={styles.mockLabel}>TERMINAL / 01</p>
                     {card.lines.map((line) => (
-                      <p key={line} className={line.startsWith("✓") ? styles.ok : undefined}>{line}</p>
+                      <p
+                        key={line}
+                        className={
+                          line.startsWith("✓") ? styles.ok : undefined
+                        }
+                      >
+                        {line}
+                      </p>
                     ))}
                   </div>
                 )}
                 {index === 1 && (
                   <div className={styles.diff}>
+                    <p className={styles.mockLabel}>DIFF / 02</p>
                     <p className={styles.diffFile}>{card.lines[0]}</p>
                     <p className={styles.diffStat}>{card.lines[1]}</p>
                     <p className={styles.diffHunk}>{card.lines[2]}</p>
-                    <span className={styles.diffPill}>Ready to review</span>
+                    <p className={styles.diffStatus}>
+                      <span aria-hidden>□</span> READY TO REVIEW
+                    </p>
                   </div>
                 )}
                 {index === 2 && (
                   <div className={styles.chat}>
+                    <p className={styles.mockLabel}>CHAT / 03</p>
                     <p className={styles.bubbleUser}>{card.lines[0]}</p>
                     <p className={styles.bubbleAi}>{card.lines[1]}</p>
                     <p className={styles.chatStatus}>{card.lines[2]}</p>
                   </div>
                 )}
               </div>
-              <h3>{card.name}</h3>
-              <p>{card.desc}</p>
+
+              <p className={styles.cardDesc}>{card.desc}</p>
             </article>
           ))}
         </div>
@@ -112,8 +137,8 @@ export function HandoffSection() {
         <div className={styles.ctaRow}>
           <p>{content.ctaHint}</p>
           <Link href={`/effects/${FEATURED}`} className={styles.cta}>
-            {content.cta}
-            <span aria-hidden>→</span>
+            <span>{content.cta}</span>
+            <span aria-hidden>↗</span>
           </Link>
         </div>
       </div>

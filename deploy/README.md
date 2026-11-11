@@ -1,6 +1,36 @@
 # Ubuntu 服务器部署
 
-当前部署前端展示站，访问地址为 https://feelcurve.com（HTTP 自动跳转到 HTTPS）。后端与数据库暂未启用。
+当前同时部署前端展示站与登录 API，访问地址为 https://feelcurve.com（HTTP 自动跳转到 HTTPS）。Web 运行在 127.0.0.1:3000，登录 API 运行在 127.0.0.1:3001；账号数据保存在独立目录 `/opt/feelcurve-data/feelcurve.db`。
+
+## 登录后端上线记录（2026-11-11 已执行）
+
+- API 独立目录 `/opt/feelcurve-api`，不随 Web 发布目录切换。PM2 进程 `feelcurve-api`：`cwd=/opt/feelcurve-api`、`node dist/main.js`、端口 3001、`--max-memory-restart 300M`；`pm2 save` 已包含该进程。
+- SQLite：`/opt/feelcurve-data/feelcurve.db`，目录 700、文件 600；已执行 `npx prisma db push`。长期使用前应补 migration 流程。
+- 生产环境文件 `/opt/feelcurve-api/.env`（600）：`NODE_ENV=production`、`PORT=3001`、`DATABASE_URL=file:/opt/feelcurve-data/feelcurve.db`、随机 `JWT_SECRET`、`WEB_APP_URL`/`API_PUBLIC_URL`/`CORS_ORIGIN=https://feelcurve.com`、GitHub `GITHUB_CLIENT_ID`。`GITHUB_CLIENT_SECRET` 需通过安全输入写入；为空时 GitHub 登录显示“暂未配置”。不要把 `.env` 提交到 Git 或打进发布包。
+- Nginx 在 HTTPS server 的 `location /` 前增加 `location /api/auth/` 转发到 `127.0.0.1:3001`，`/api/health` 仍由 Next 处理；配置备份为 `/etc/nginx/conf.d/feelcurve.conf.bak-20261111-1706`。
+- GitHub OAuth App 的 callback URL 为 `https://feelcurve.com/api/auth/github/callback`。
+- Web 构建时设置 `NEXT_PUBLIC_API_URL=https://feelcurve.com`（构建时变量）。2026-11-11 已发布并验证注册、自动登录、刷新保持、退出、重新登录、重复注册和错误密码。
+- 服务器内存有限：`deploy/update-server.sh` 的依赖安装使用 `systemd-run --scope` 限制 900MB 内存/1GB swap，并默认使用 npmmirror；安装失败只退出，不切换线上。该脚本只负责 Web，不负责 API。
+- 尚未完成：GitHub Client Secret 写入与真实 GitHub 授权验证、登录限流、邮箱验证、找回密码、账号自助删除。JWT 有效期为 7 天；退出只清除 Cookie，已签发的 token 在有效期内仍可用。
+
+### 写入 GitHub Client Secret
+
+在项目根目录执行（输入隐藏，Secret 不会出现在命令或 Git 中）：
+
+```powershell
+.\deploy\set-github-secret.ps1
+```
+
+脚本会写入 `/opt/feelcurve-api/.env` 并重启 `feelcurve-api`，然后检查 `/api/auth/github` 是否 302 到 GitHub。重定向正确不等于 Secret 一定有效；需在浏览器完成一次 GitHub 授权登录。
+
+### 从零重建 API（备查）
+
+1. 把 `packages/api` 的 `package.json`、`nest-cli.json`、`tsconfig.json`、`prisma/schema.prisma`、`src` 上传到 `/opt/feelcurve-api`；执行 `npm install`、`npm run build`、`npx prisma generate`。
+2. 参考 `packages/api/.env.example` 写入生产 `.env`，权限设为 600；`JWT_SECRET` 用 `openssl rand -hex 32` 生成，GitHub Secret 用上面的脚本写入。
+3. 执行 `npx prisma db push`；长期使用前补 migration 流程，避免长期依赖 `db push`。
+4. 执行 `pm2 start dist/main.js --name feelcurve-api --cwd /opt/feelcurve-api --time --max-memory-restart 300M`，再执行 `pm2 save`。
+5. 在 Nginx 的 HTTPS server 中保留 `location /` 给 Next，只增加 `/api/auth/` 到 3001 的转发；执行 `nginx -t` 后 reload。不要把整个 `/api/` 转发到 Nest。
+6. GitHub OAuth App 填 callback `https://feelcurve.com/api/auth/github/callback`；构建 Web 时设置 `NEXT_PUBLIC_API_URL=https://feelcurve.com`，发布后验证注册、刷新、退出、重新登录和 GitHub 授权。
 
 ## 一键更新（推荐）
 

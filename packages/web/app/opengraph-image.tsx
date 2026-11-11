@@ -17,59 +17,109 @@ export default function OpengraphImage() {
           display: "flex",
           flexDirection: "column",
           justifyContent: "space-between",
-          background: "#07080a",
-          color: "#c8ff4d",
-          padding: "76px 80px",
+          background: "#F2EFE8",
+          color: "#111111",
+          padding: "54px 64px 44px",
+          fontFamily: "Helvetica, Arial, sans-serif",
         }}
       >
         <div
           style={{
             display: "flex",
-            alignItems: "center",
-            gap: 16,
-            fontSize: 28,
-            letterSpacing: "0.2em",
+            alignItems: "flex-start",
+            justifyContent: "space-between",
+            borderBottom: "2px solid #111111",
+            paddingBottom: "18px",
           }}
         >
+          <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+            <div
+              style={{
+                display: "flex",
+                width: 34,
+                height: 34,
+                alignItems: "center",
+                justifyContent: "flex-start",
+                background: "#DA291C",
+                color: "#F2EFE8",
+                fontSize: 26,
+                fontWeight: 700,
+                paddingLeft: 9,
+                boxSizing: "border-box",
+              }}
+            >
+              F
+            </div>
+            <div
+              style={{
+                display: "flex",
+                fontSize: 20,
+                fontWeight: 700,
+                letterSpacing: "-0.02em",
+              }}
+            >
+              FeelCurve
+            </div>
+          </div>
           <div
             style={{
               display: "flex",
-              width: 16,
-              height: 16,
-              borderRadius: 999,
-              background: "#c8ff4d",
+              flexDirection: "column",
+              alignItems: "flex-end",
+              gap: 2,
+              fontSize: 11,
+              letterSpacing: "0.1em",
+              textTransform: "uppercase",
+              color: "rgba(17,17,17,.55)",
             }}
-          />
-          <div style={{ display: "flex" }}>FEELCURVE</div>
+          >
+            <span>Motion → Prompt / Archive</span>
+            <span>Zürich / Shanghai · 2026</span>
+          </div>
+        </div>
+
+        <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
+          <div
+            style={{
+              display: "flex",
+              fontSize: 106,
+              fontWeight: 700,
+              letterSpacing: "-0.07em",
+              lineHeight: 0.92,
+            }}
+          >
+            Motion you love,
+          </div>
+          <div
+            style={{
+              display: "flex",
+              marginLeft: 82,
+              color: "#DA291C",
+              fontSize: 106,
+              fontWeight: 700,
+              letterSpacing: "-0.07em",
+              lineHeight: 0.92,
+            }}
+          >
+            copied as a prompt.
+          </div>
         </div>
 
         <div
           style={{
             display: "flex",
-            flexDirection: "column",
-            gap: 22,
+            alignItems: "flex-end",
+            justifyContent: "space-between",
+            borderTop: "1px solid #111111",
+            paddingTop: "14px",
+            fontSize: 11,
+            letterSpacing: "0.06em",
+            textTransform: "uppercase",
+            color: "rgba(17,17,17,.62)",
           }}
         >
-          <div
-            style={{
-              display: "flex",
-              fontSize: 126,
-              fontWeight: 700,
-              letterSpacing: "-0.05em",
-              lineHeight: 1,
-            }}
-          >
-            FeelCurve
-          </div>
-          <div
-            style={{
-              display: "flex",
-              fontSize: 40,
-              opacity: 0.9,
-            }}
-          >
-            Motion, copied as prompts.
-          </div>
+          <span>Live specimens — specifications — acceptance checks</span>
+          <span style={{ display: "flex", color: "#111111", fontWeight: 700 }}>FeelCurve / 01</span>
         </div>
       </div>
     ),

@@ -121,9 +121,11 @@ const ACTIVE_BUTTON_STYLE = {
 export function NavIndicatorDemo({
   params,
   locale,
+  compact = false,
 }: {
   params: Params;
   locale: Locale;
+  compact?: boolean;
 }) {
   const copy = COPY[locale];
   const duration = readNumber(
@@ -154,26 +156,29 @@ export function NavIndicatorDemo({
   return (
     <div
       data-demo="nav-indicator"
+      data-compact={compact || undefined}
       className="flex w-full flex-col items-center gap-3"
     >
       <div className="w-full" style={{ ...CARD_STYLE, maxWidth: 360 }}>
-        <div className="mb-3 flex items-center justify-between gap-2">
-          <span
-            className="mono-label"
-            style={{ fontSize: 10, letterSpacing: "0.14em", color: "#6a6d74" }}
-          >
-            {copy.heading.toUpperCase()}
-          </span>
-          <span
-            style={{
-              fontSize: 10,
-              color: "#6a6d74",
-              fontVariantNumeric: "tabular-nums",
-            }}
-          >
-            {duration}ms · {thickness}px
-          </span>
-        </div>
+        {!compact && (
+          <div className="mb-3 flex items-center justify-between gap-2">
+            <span
+              className="mono-label"
+              style={{ fontSize: 10, letterSpacing: "0.14em", color: "#6a6d74" }}
+            >
+              {copy.heading.toUpperCase()}
+            </span>
+            <span
+              style={{
+                fontSize: 10,
+                color: "#6a6d74",
+                fontVariantNumeric: "tabular-nums",
+              }}
+            >
+              {duration}ms · {thickness}px
+            </span>
+          </div>
+        )}
 
         <div style={{ width, maxWidth: "100%" }}>
           <NavIndicator
@@ -224,22 +229,24 @@ export function NavIndicatorDemo({
           </p>
         </div>
 
-        <div className="mt-3 flex flex-wrap items-center gap-2">
-          <button
-            type="button"
-            data-demo-narrow=""
-            aria-pressed={narrow}
-            onClick={() => setNarrow((value) => !value)}
-            style={narrow ? ACTIVE_BUTTON_STYLE : BUTTON_STYLE}
-          >
-            {copy.narrow}
-          </button>
-          <span style={{ fontSize: 11, lineHeight: 1.5, color: "#6a6d74" }}>
-            {copy.hint}
-          </span>
-        </div>
+        {!compact && (
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              data-demo-narrow=""
+              aria-pressed={narrow}
+              onClick={() => setNarrow((value) => !value)}
+              style={narrow ? ACTIVE_BUTTON_STYLE : BUTTON_STYLE}
+            >
+              {copy.narrow}
+            </button>
+            <span style={{ fontSize: 11, lineHeight: 1.5, color: "#6a6d74" }}>
+              {copy.hint}
+            </span>
+          </div>
+        )}
 
-        {narrow ? (
+        {!compact && narrow ? (
           <p
             style={{
               margin: "8px 0 0",

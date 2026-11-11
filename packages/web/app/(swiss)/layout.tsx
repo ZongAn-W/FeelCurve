@@ -1,17 +1,13 @@
-import type { Metadata } from "next";
-import localFont from "next/font/local";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { Analytics } from "@/components/analytics/Analytics";
 import { Providers } from "@/components/providers/Providers";
 import { SITE_URL } from "@/lib/site-info";
 
-const displayFont = localFont({
-  src: "../components/site/fonts/feelcurve-display.woff2",
-  weight: "500",
-  display: "swap",
-  variable: "--font-feelcurve-display",
-  adjustFontFallback: false,
-});
+export const viewport: Viewport = {
+  colorScheme: "light",
+  themeColor: "#f2efe8",
+};
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -53,7 +49,6 @@ export default function RootLayout({
     <html
       lang="zh-CN"
       data-scroll-behavior="smooth"
-      className={displayFont.variable}
       suppressHydrationWarning
     >
       <body>
