@@ -99,7 +99,7 @@ export type PromptArgs = {
 export type EffectModule = {
   spec: EffectSpec;
   buildPrompt: (args: PromptArgs) => string;
-  Demo: ComponentType<{ params: Params; locale: Locale }>;
+  Demo: ComponentType<{ params: Params; locale: Locale; compact?: boolean }>;
 };
 
 export function readNumber(

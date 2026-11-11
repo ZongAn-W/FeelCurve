@@ -9,9 +9,11 @@ import type { Locale } from "@/lib/i18n";
 export function StaggeredTextDemo({
   params,
   locale,
+  compact = false,
 }: {
   params: Params;
   locale: Locale;
+  compact?: boolean;
 }) {
   const [replay, setReplay] = useState(0);
   const stagger = readNumber(params, "stagger", STAGGERED.defaults.stagger);
@@ -28,7 +30,18 @@ export function StaggeredTextDemo({
       : "Motion you love,\ncopied as a prompt.";
 
   return (
-    <div className="flex flex-col items-center gap-8 px-4 text-center">
+    <div
+      data-demo="staggered-text"
+      data-compact={compact || undefined}
+      className={
+        compact
+          ? "flex w-full flex-col items-start gap-5 px-6 text-left"
+          : "flex flex-col items-center gap-8 px-4 text-center"
+      }
+    >
+      {compact && (
+        <span aria-hidden="true" className="block h-2 w-2 bg-[#DA291C]" />
+      )}
       <StaggeredText
         key={`${replay}-${stagger}-${duration}-${rise}-${blur}`}
         text={text}
@@ -36,19 +49,27 @@ export function StaggeredTextDemo({
         duration={duration}
         rise={rise}
         blur={blur}
-        className="max-w-[640px] text-ink"
+        className={compact ? "w-full max-w-[390px] text-ink" : "max-w-[640px] text-ink"}
         style={{
-          fontSize: STAGGERED.text.fontSize,
-          lineHeight: STAGGERED.text.lineHeight,
-          fontWeight: STAGGERED.text.fontWeight,
-          letterSpacing: STAGGERED.text.letterSpacing,
-          color: STAGGERED.text.color,
+          fontSize: compact
+            ? locale === "zh"
+              ? "clamp(34px, 10vw, 50px)"
+              : "clamp(28px, 8vw, 40px)"
+            : STAGGERED.text.fontSize,
+          lineHeight: compact ? 1.04 : STAGGERED.text.lineHeight,
+          fontWeight: compact ? 700 : STAGGERED.text.fontWeight,
+          letterSpacing: compact ? "-0.045em" : STAGGERED.text.letterSpacing,
+          color: compact ? "#111111" : STAGGERED.text.color,
         }}
       />
       <button
         type="button"
         onClick={() => setReplay((value) => value + 1)}
-        className="inline-flex items-center gap-2 rounded-full border border-line px-3.5 py-2 text-[11.5px] text-muted transition-colors hover:bg-white/[0.05] hover:text-ink"
+        className={
+          compact
+            ? "inline-flex items-center gap-2 border border-[#111111]/30 px-2 py-1.5 text-[9px] uppercase tracking-[0.12em] text-[#111111]/60 transition-colors hover:border-[#DA291C] hover:text-[#DA291C]"
+            : "inline-flex items-center gap-2 rounded-full border border-line px-3.5 py-2 text-[11.5px] text-muted transition-colors hover:bg-white/[0.05] hover:text-ink"
+        }
       >
         <svg width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden>
           <path

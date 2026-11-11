@@ -107,9 +107,11 @@ const DIALOG_BUTTON_BASE: CSSProperties = {
 export default function ModalEntranceDemo({
   params,
   locale,
+  compact = false,
 }: {
   params: Params;
   locale: Locale;
+  compact?: boolean;
 }) {
   const copy = COPY[locale];
   const overlayMs = readNumber(params, "overlayMs", MODAL_ENTRANCE.defaults.overlayMs);
@@ -122,6 +124,7 @@ export default function ModalEntranceDemo({
   return (
     <div
       data-demo="modal-entrance"
+      data-compact={compact || undefined}
       style={{
         width: "100%",
         maxWidth: 360,
@@ -130,19 +133,21 @@ export default function ModalEntranceDemo({
         gap: 10,
       }}
     >
-      <div
-        style={{
-          display: "flex",
-          alignItems: "baseline",
-          justifyContent: "space-between",
-          gap: 8,
-        }}
-      >
-        <span style={KICKER_STYLE}>{copy.kicker}</span>
-        <span style={MONO_STYLE}>
-          {overlayMs} / {panelMs} / {closeMs} ms
-        </span>
-      </div>
+      {!compact && (
+        <div
+          style={{
+            display: "flex",
+            alignItems: "baseline",
+            justifyContent: "space-between",
+            gap: 8,
+          }}
+        >
+          <span style={KICKER_STYLE}>{copy.kicker}</span>
+          <span style={MONO_STYLE}>
+            {overlayMs} / {panelMs} / {closeMs} ms
+          </span>
+        </div>
+      )}
 
       <div style={CARD_STYLE}>
         <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
@@ -245,9 +250,11 @@ export default function ModalEntranceDemo({
         </ModalEntrance>
       </div>
 
-      <p style={{ margin: 0, fontSize: 11.5, lineHeight: 1.55, color: "#6a6d74" }}>
-        {copy.hint}
-      </p>
+      {!compact && (
+        <p style={{ margin: 0, fontSize: 11.5, lineHeight: 1.55, color: "#6a6d74" }}>
+          {copy.hint}
+        </p>
+      )}
     </div>
   );
 }

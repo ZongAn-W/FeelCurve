@@ -11,9 +11,11 @@ const C = DIGIT_ROLLER;
 export function DigitRollerDemo({
   params,
   locale,
+  compact = false,
 }: {
   params: Params;
   locale: Locale;
+  compact?: boolean;
 }) {
   const duration = readNumber(params, "duration", C.defaults.duration);
   const stagger = readNumber(params, "stagger", C.defaults.stagger);
@@ -100,6 +102,7 @@ export function DigitRollerDemo({
   return (
     <div
       data-demo="digit-roller"
+      data-compact={compact || undefined}
       className="flex w-full max-w-[360px] flex-col gap-3"
     >
       <div className="overflow-hidden rounded-[18px] border border-white/10 bg-[#12151a] px-5 pb-4 pt-4">
@@ -160,29 +163,33 @@ export function DigitRollerDemo({
         </div>
       </div>
 
-      <div className="flex items-stretch gap-2">
-        <button
-          type="button"
-          onClick={next}
-          className="flex-1 rounded-full border border-accent/40 bg-accent/10 px-3 py-2 text-[11.5px] font-medium text-ink transition-colors hover:border-accent/70 hover:bg-accent/15"
-        >
-          {zh ? "换一个数字" : "Next number"}
-        </button>
-        <button
-          type="button"
-          onClick={reset}
-          disabled={atBase}
-          className="rounded-full border border-line px-3 py-2 text-[11.5px] text-muted transition-colors hover:bg-white/[0.05] hover:text-ink disabled:cursor-not-allowed disabled:opacity-35 disabled:hover:bg-transparent disabled:hover:text-muted"
-        >
-          {zh ? "回到起点" : "Reset"}
-        </button>
-      </div>
+      {!compact && (
+        <>
+          <div className="flex items-stretch gap-2">
+            <button
+              type="button"
+              onClick={next}
+              className="flex-1 rounded-full border border-accent/40 bg-accent/10 px-3 py-2 text-[11.5px] font-medium text-ink transition-colors hover:border-accent/70 hover:bg-accent/15"
+            >
+              {zh ? "换一个数字" : "Next number"}
+            </button>
+            <button
+              type="button"
+              onClick={reset}
+              disabled={atBase}
+              className="rounded-full border border-line px-3 py-2 text-[11.5px] text-muted transition-colors hover:bg-white/[0.05] hover:text-ink disabled:cursor-not-allowed disabled:opacity-35 disabled:hover:bg-transparent disabled:hover:text-muted"
+            >
+              {zh ? "回到起点" : "Reset"}
+            </button>
+          </div>
 
-      <p className="text-center font-mono text-[9px] uppercase tracking-[0.1em] text-faint">
-        {zh
-          ? "每一位数字都在自己的滚轴上滚到目标"
-          : "Every digit rolls on its own reel, then lands on target"}
-      </p>
+          <p className="text-center font-mono text-[9px] uppercase tracking-[0.1em] text-faint">
+            {zh
+              ? "每一位数字都在自己的滚轴上滚到目标"
+              : "Every digit rolls on its own reel, then lands on target"}
+          </p>
+        </>
+      )}
     </div>
   );
 }

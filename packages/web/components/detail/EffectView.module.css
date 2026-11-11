@@ -294,30 +294,6 @@
   flex-shrink: 0;
 }
 
-.stageBlue {
-  background: #b7c9eb;
-}
-
-.stageBlue [data-demo="magnetic-button"] > div:first-child {
-  border-color: rgba(17, 17, 17, 0.28);
-}
-
-.stageGraphite {
-  background: #1d2329;
-}
-
-.stageWarm {
-  background: #24221f;
-}
-
-.stagePlum {
-  background: #201d28;
-}
-
-.stageTeal {
-  background: #152627;
-}
-
 .previewFooter {
   display: flex;
   flex-wrap: wrap;

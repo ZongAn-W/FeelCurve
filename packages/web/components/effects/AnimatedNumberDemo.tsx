@@ -20,9 +20,11 @@ function formatDelta(delta: number): string {
 export function AnimatedNumberDemo({
   params,
   locale,
+  compact = false,
 }: {
   params: Params;
   locale: Locale;
+  compact?: boolean;
 }) {
   const duration = readNumber(params, "duration", C.defaults.duration);
   const precision = readNumber(params, "precision", C.defaults.precision);
@@ -86,6 +88,7 @@ export function AnimatedNumberDemo({
   return (
     <div
       data-demo="animated-number"
+      data-compact={compact || undefined}
       className="flex w-full max-w-[340px] flex-col gap-3"
     >
       <div className="overflow-hidden rounded-[18px] border border-white/10 bg-[#12151a] px-4 pb-3.5 pt-3">
@@ -151,48 +154,52 @@ export function AnimatedNumberDemo({
         </div>
       </div>
 
-      <div className="flex items-stretch gap-2">
-        <button
-          type="button"
-          onClick={applyDelta}
-          className="flex-1 rounded-full border border-accent/40 bg-accent/10 px-3 py-2 text-[11.5px] font-medium text-ink transition-colors hover:border-accent/70 hover:bg-accent/15"
-        >
-          {refreshLabel}
-        </button>
-        <button
-          type="button"
-          onClick={reset}
-          className="rounded-full border border-line px-3 py-2 text-[11.5px] text-muted transition-colors hover:bg-white/[0.05] hover:text-ink"
-        >
-          {zh ? "归零" : "Reset"}
-        </button>
-      </div>
+      {!compact && (
+        <>
+          <div className="flex items-stretch gap-2">
+            <button
+              type="button"
+              onClick={applyDelta}
+              className="flex-1 rounded-full border border-accent/40 bg-accent/10 px-3 py-2 text-[11.5px] font-medium text-ink transition-colors hover:border-accent/70 hover:bg-accent/15"
+            >
+              {refreshLabel}
+            </button>
+            <button
+              type="button"
+              onClick={reset}
+              className="rounded-full border border-line px-3 py-2 text-[11.5px] text-muted transition-colors hover:bg-white/[0.05] hover:text-ink"
+            >
+              {zh ? "归零" : "Reset"}
+            </button>
+          </div>
 
-      <button
-        type="button"
-        aria-pressed={nonFinite}
-        onClick={toggleNonFinite}
-        className={[
-          "rounded-full border px-3 py-2 text-[11.5px] transition-colors",
-          nonFinite
-            ? "border-amber-300/50 bg-amber-300/10 text-ink"
-            : "border-white/10 bg-white/[0.03] text-muted hover:border-white/25 hover:text-ink",
-        ].join(" ")}
-      >
-        {nonFinite
-          ? zh
-            ? "NaN 已透传 — 点击恢复"
-            : "NaN passed through — click to restore"
-          : zh
-            ? "传入 NaN（非有限值原样透传）"
-            : "Pass NaN (non-finite values render as-is)"}
-      </button>
+          <button
+            type="button"
+            aria-pressed={nonFinite}
+            onClick={toggleNonFinite}
+            className={[
+              "rounded-full border px-3 py-2 text-[11.5px] transition-colors",
+              nonFinite
+                ? "border-amber-300/50 bg-amber-300/10 text-ink"
+                : "border-white/10 bg-white/[0.03] text-muted hover:border-white/25 hover:text-ink",
+            ].join(" ")}
+          >
+            {nonFinite
+              ? zh
+                ? "NaN 已透传 — 点击恢复"
+                : "NaN passed through — click to restore"
+              : zh
+                ? "传入 NaN（非有限值原样透传）"
+                : "Pass NaN (non-finite values render as-is)"}
+          </button>
 
-      <p className="text-center font-mono text-[9px] uppercase tracking-[0.1em] text-faint">
-        {zh
-          ? "连点刷新：从当前显示值改道重数"
-          : "Click refresh mid-count — it retargets from the number on screen"}
-      </p>
+          <p className="text-center font-mono text-[9px] uppercase tracking-[0.1em] text-faint">
+            {zh
+              ? "连点刷新：从当前显示值改道重数"
+              : "Click refresh mid-count — it retargets from the number on screen"}
+          </p>
+        </>
+      )}
     </div>
   );
 }

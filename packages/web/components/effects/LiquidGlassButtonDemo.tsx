@@ -18,9 +18,11 @@ import type { Locale } from "@/lib/i18n";
 export function LiquidGlassButtonDemo({
   params,
   locale,
+  compact = false,
 }: {
   params: Params;
   locale: Locale;
+  compact?: boolean;
 }) {
   const [pattern, setPattern] = useState<GlassPatternId>("medallion");
 
@@ -38,11 +40,12 @@ export function LiquidGlassButtonDemo({
   return (
     <div
       data-demo="liquid-glass-button-stage"
+      data-compact={compact || undefined}
       className="flex w-full max-w-[480px] flex-col items-center gap-3"
     >
       <div
         data-active-pattern={pattern}
-        className="relative aspect-[4/3] w-full overflow-hidden rounded-[26px] border border-white/15"
+        className={`relative w-full overflow-hidden rounded-[26px] border border-white/15 ${compact ? "aspect-[16/9]" : "aspect-[4/3]"}`}
         style={{
           isolation: "isolate",
           boxShadow:
@@ -69,12 +72,14 @@ export function LiquidGlassButtonDemo({
           }}
         />
 
-        <div className="absolute inset-x-0 top-0 z-10 flex items-center justify-between px-5 pt-3.5 text-white/85 [[data-effect-card]_&]:hidden">
+        {!compact && (
+          <div className="absolute inset-x-0 top-0 z-10 flex items-center justify-between px-5 pt-3.5 text-white/85 [[data-effect-card]_&]:hidden">
           <span className="font-semibold" style={{ fontSize: 10.5 }}>
             9:41
           </span>
-          <StatusIcons />
-        </div>
+            <StatusIcons />
+          </div>
+        )}
 
         <div className="absolute inset-0 grid grid-cols-1 place-items-center px-4">
           <LiquidGlassButton
@@ -88,15 +93,18 @@ export function LiquidGlassButtonDemo({
           />
         </div>
 
-        <p
-          className="pointer-events-none absolute inset-x-0 bottom-0 z-10 pb-3.5 text-center font-mono uppercase text-white/65"
-          style={{ fontSize: 9, letterSpacing: "0.14em" }}
-        >
-          {zh ? "按住按钮 · 松手看果冻回弹" : "Press · release · watch it wobble"}
-        </p>
+        {!compact && (
+          <p
+            className="pointer-events-none absolute inset-x-0 bottom-0 z-10 pb-3.5 text-center font-mono uppercase text-white/65"
+            style={{ fontSize: 9, letterSpacing: "0.14em" }}
+          >
+            {zh ? "按住按钮 · 松手看果冻回弹" : "Press · release · watch it wobble"}
+          </p>
+        )}
       </div>
 
-      <div className="flex flex-col items-center gap-1.5">
+      {!compact && (
+        <div className="flex flex-col items-center gap-1.5">
         <div
           role="group"
           aria-label={zh ? "按钮底纹" : "Button surface"}
@@ -134,10 +142,11 @@ export function LiquidGlassButtonDemo({
             );
           })}
         </div>
-        <p className="font-mono text-[9px] uppercase tracking-[0.14em] text-faint">
-          {zh ? "点击更换按钮底下的底纹" : "Click a swatch to change the surface"}
-        </p>
-      </div>
+          <p className="font-mono text-[9px] uppercase tracking-[0.14em] text-faint">
+            {zh ? "点击更换按钮底下的底纹" : "Click a swatch to change the surface"}
+          </p>
+        </div>
+      )}
     </div>
   );
 }

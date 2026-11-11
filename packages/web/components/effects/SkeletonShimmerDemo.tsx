@@ -268,9 +268,11 @@ function Chip({
 export function SkeletonShimmerDemo({
   params,
   locale,
+  compact = false,
 }: {
   params: Params;
   locale: Locale;
+  compact?: boolean;
 }) {
   const duration = readNumber(params, "duration", C.defaults.duration);
   const stagger = readNumber(params, "stagger", C.defaults.stagger);
@@ -284,7 +286,12 @@ export function SkeletonShimmerDemo({
   return (
     <div
       data-demo="skeleton-shimmer"
-      className="flex w-full max-w-[340px] flex-col items-center gap-3"
+      data-compact={compact || undefined}
+      className={
+        compact
+          ? "flex w-full max-w-[340px] flex-col items-center"
+          : "flex w-full max-w-[340px] flex-col items-center gap-3"
+      }
     >
       <div style={{ width: C.demo.width, maxWidth: "100%" }}>
         {loaded ? (
@@ -301,6 +308,8 @@ export function SkeletonShimmerDemo({
         )}
       </div>
 
+      {!compact && (
+        <>
       <div className="flex w-full items-center justify-between gap-2">
         <div
           role="group"
@@ -333,6 +342,8 @@ export function SkeletonShimmerDemo({
           ? `切换状态：骨架整棵卸载，真实内容占同一个盒子 · ${duration}ms`
           : `Toggle state — the skeleton unmounts, real content holds the same box · ${duration}ms`}
       </p>
+        </>
+      )}
     </div>
   );
 }

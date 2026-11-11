@@ -6,6 +6,7 @@ import { useLocale } from "@/components/providers/Providers";
 import { CopyButton } from "@/components/ui/CopyButton";
 import { liveModules } from "@/content/effects/registry";
 import { defaultParams, type EffectModule } from "@/content/effects/types";
+import { demoSurface } from "@/lib/demo-surface";
 import {
   effectGroups,
   filterEffectModules,
@@ -51,18 +52,6 @@ const copy = {
     upcomingName: "Scroll parallax is in the works",
   },
 } as const;
-
-const stageStyles: Record<string, string> = {
-  "magnetic-button": styles.stageBlue,
-  "spotlight-card": styles.stageGraphite,
-  "staggered-text": styles.stageWarm,
-  "liquid-glass-button": styles.stagePlum,
-  "submit-button": styles.stageTeal,
-  "jelly-toggle": styles.stagePlum,
-  "hold-to-delete": styles.stageWarm,
-  "animated-number": styles.stageTeal,
-  "digit-roller": styles.stageGraphite,
-};
 
 const groupCounts = Object.fromEntries(
   effectGroups.map(({ id }) => [
@@ -111,7 +100,11 @@ function EffectCard({ module, locale, content, categoryLabel, index }: CardProps
         </span>
       </div>
 
-      <div className={`${styles.preview} ${stageStyles[spec.slug] ?? ""}`}>
+      <div
+        className={`${styles.preview} swissDemo swissCard`}
+        data-stage={spec.slug}
+        data-surface={demoSurface(spec.slug)}
+      >
         <div
           className={styles.demo}
           style={{
@@ -122,22 +115,7 @@ function EffectCard({ module, locale, content, categoryLabel, index }: CardProps
           <Demo
             params={{ ...defaultParams(spec), ...(spec.previewParams ?? {}) }}
             locale={locale}
-          />
-        </div>
-        <div className={styles.quickCopy}>
-          <CopyButton
-            text={prompt}
-            label={content.copyPrompt}
-            copiedLabel={content.copied}
-            failedLabel={content.copyFailed}
-            variant="ghost"
-            analytics={{
-              slug: spec.slug,
-              surface: "library_card",
-              stack: "react",
-              variant: "full",
-              lang: locale,
-            }}
+            compact
           />
         </div>
       </div>
@@ -152,12 +130,29 @@ function EffectCard({ module, locale, content, categoryLabel, index }: CardProps
           </Link>
         </h3>
         <p className={styles.tagline}>{spec.tagline[locale]}</p>
-        <p className={styles.meta}>
-          <span>
-            {stackCount} {content.stacksLabel}
-          </span>
-          <span>{spec.category?.toUpperCase() ?? "MOTION"}</span>
-        </p>
+        <div className={styles.cardFoot}>
+          <p className={styles.meta}>
+            <span>
+              {stackCount} {content.stacksLabel}
+            </span>
+            <span>{spec.category?.toUpperCase() ?? "MOTION"}</span>
+          </p>
+          <CopyButton
+            text={prompt}
+            label={content.copyPrompt}
+            copiedLabel={content.copied}
+            failedLabel={content.copyFailed}
+            variant="ghost"
+            className={styles.copyAction}
+            analytics={{
+              slug: spec.slug,
+              surface: "library_card",
+              stack: "react",
+              variant: "full",
+              lang: locale,
+            }}
+          />
+        </div>
       </div>
     </article>
   );

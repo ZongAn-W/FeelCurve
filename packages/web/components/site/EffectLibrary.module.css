@@ -255,70 +255,132 @@
 .preview {
   position: relative;
   display: flex;
-  height: clamp(210px, 19vw, 280px);
+  height: clamp(260px, 21vw, 302px);
   align-items: center;
   justify-content: center;
   overflow: hidden;
   margin-top: 8px;
   background: var(--ink);
+  isolation: isolate;
 }
 
-.preview::before {
+.preview::after {
   position: absolute;
-  top: 50%;
-  left: 0;
-  width: 100%;
-  border-top: 1px solid rgba(242, 239, 232, 0.12);
+  top: 10px;
+  right: 10px;
+  width: 6px;
+  height: 6px;
+  background: var(--red);
   content: "";
+}
+
+.preview[data-surface="paper"] {
+  --color-void: #e9e4d9;
+  --color-surface: #f2efe8;
+  --color-surface-2: #ded8cb;
+  --color-surface-3: #d2ccbe;
+  --color-line: rgba(17, 17, 17, 0.22);
+  --color-ink: #111111;
+  --color-muted: rgba(17, 17, 17, 0.64);
+  --color-faint: rgba(17, 17, 17, 0.44);
+  --color-accent: #da291c;
+  --color-accent-dim: #b32118;
+  background: #e9e4d9;
+  color: var(--color-ink);
+}
+
+.preview[data-surface="paper"] [data-demo="magnetic-button"] [class*="border-dashed"] {
+  border-color: rgba(17, 17, 17, 0.2) !important;
+}
+
+.preview[data-surface="paper"] [data-demo="submit-button"] button[data-phase="idle"] {
+  border-color: var(--red) !important;
+  background: var(--red) !important;
+  color: var(--paper) !important;
+}
+
+.preview[data-surface="paper"] [data-demo="submit-button"] button[data-phase="idle"]:focus-visible {
+  outline-color: var(--red);
 }
 
 .demo {
   position: relative;
   display: flex;
-  max-width: 86%;
+  width: 100%;
+  max-width: 92%;
   align-items: center;
   justify-content: center;
   transform: scale(var(--preview-scale, 1));
   transform-origin: center;
 }
 
-.stageBlue {
-  background: #b7c9eb;
+/* Each live object gets its own frame inside the shared plate. */
+.preview[data-stage="magnetic-button"] .demo {
+  transform: translateX(12px) scale(calc(var(--preview-scale, 1) * 1.08));
 }
 
-.stageBlue::before {
-  border-top-color: rgba(17, 17, 17, 0.18);
+.preview[data-stage="spotlight-card"] .demo {
+  transform: translateX(-14px) scale(calc(var(--preview-scale, 1) * 0.9));
 }
 
-.stageGraphite {
-  background: #1d2329;
+.preview[data-stage="staggered-text"] .demo {
+  align-items: flex-start;
+  justify-content: flex-start;
+  transform: translateX(4px) scale(calc(var(--preview-scale, 1) * 0.9));
 }
 
-.stageWarm {
-  background: #24221f;
+.preview[data-stage="staggered-text"] :global([data-demo]) {
+  align-items: flex-start;
+  gap: 18px;
+  padding-left: 24px;
+  text-align: left;
 }
 
-.stagePlum {
-  background: #201d28;
+.preview[data-stage="liquid-glass-button"] .demo {
+  transform: scale(calc(var(--preview-scale, 1) * 1.06));
 }
 
-.stageTeal {
-  background: #152627;
+.preview[data-stage="submit-button"] .demo {
+  transform: translateX(-10px) scale(calc(var(--preview-scale, 1) * 0.94));
 }
 
-.quickCopy {
-  position: absolute;
-  bottom: 9px;
-  left: 9px;
-  z-index: 3;
-  background: var(--paper);
-  color: var(--ink);
+.preview[data-stage="jelly-toggle"] .demo {
+  transform: translateX(14px) scale(calc(var(--preview-scale, 1) * 1.04));
 }
 
-.quickCopy :global(button:hover) {
-  background: var(--red);
-  border-color: var(--red);
-  color: var(--paper);
+.preview[data-stage="hold-to-delete"] .demo {
+  transform: translateX(-14px) scale(calc(var(--preview-scale, 1) * 0.96));
+}
+
+.preview[data-stage="animated-number"] .demo,
+.preview[data-stage="digit-roller"] .demo {
+  justify-content: flex-end;
+  padding-right: 12px;
+  transform: scale(calc(var(--preview-scale, 1) * 0.98));
+}
+
+.preview[data-stage="skeleton-shimmer"] .demo {
+  transform: translateX(-16px) scale(calc(var(--preview-scale, 1) * 0.94));
+}
+
+.preview[data-stage="stagger-list"] .demo {
+  transform: translateX(14px) scale(calc(var(--preview-scale, 1) * 0.82));
+}
+
+.preview[data-stage="toast-exit"] .demo {
+  transform: translateX(-13px) scale(calc(var(--preview-scale, 1) * 0.88));
+}
+
+.preview[data-stage="modal-entrance"] .demo {
+  transform: scale(calc(var(--preview-scale, 1) * 0.95));
+}
+
+.preview[data-stage="nav-indicator"] .demo {
+  transform: translateX(-10px) scale(calc(var(--preview-scale, 1) * 0.92));
+}
+
+.preview[data-stage="theme-reveal"] .demo {
+  transform: scale(calc(var(--preview-scale, 1) * 0.98));
 }
 
 .cardBody {
@@ -358,16 +420,46 @@
   line-height: 1.55;
 }
 
+.cardFoot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-top: 14px;
+  border-top: 1px solid var(--rule-soft);
+  padding-top: 8px;
+}
+
 .meta {
   display: flex;
+  flex: 1;
   justify-content: space-between;
   gap: 16px;
-  margin-top: 14px;
   color: rgba(17, 17, 17, 0.4);
   font-size: 8px;
   line-height: 1.3;
   letter-spacing: 0.06em;
   text-transform: uppercase;
+}
+
+.copyAction {
+  flex: none;
+  min-height: 26px;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: var(--ink);
+  font-size: 9px;
+  letter-spacing: 0.04em;
+}
+
+.copyAction:hover {
+  background: transparent;
+  color: var(--red);
+}
+
+.copyAction span {
+  display: inline;
 }
 
 .empty {
@@ -586,8 +678,7 @@
     max-width: 92%;
   }
 
-  .quickCopy {
-    bottom: 7px;
-    left: 7px;
+  .preview[data-stage="staggered-text"] .demo {
+    transform: none !important;
   }
 }

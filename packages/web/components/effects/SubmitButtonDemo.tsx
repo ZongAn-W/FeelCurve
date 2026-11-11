@@ -13,9 +13,14 @@ import { SubmitButton } from "./SubmitButton";
 export type SubmitButtonDemoProps = {
   params: Params;
   locale: Locale;
+  compact?: boolean;
 };
 
-export function SubmitButtonDemo({ params, locale }: SubmitButtonDemoProps) {
+export function SubmitButtonDemo({
+  params,
+  locale,
+  compact = false,
+}: SubmitButtonDemoProps) {
   const zh = locale === "zh";
   const [simulateError, setSimulateError] = useState(false);
   const [lastResult, setLastResult] = useState<"success" | "error" | null>(null);
@@ -36,6 +41,13 @@ export function SubmitButtonDemo({ params, locale }: SubmitButtonDemoProps) {
         className="pointer-events-none absolute inset-x-10 top-0 h-24 bg-[radial-gradient(ellipse_at_top,rgba(201,244,90,0.09),rgba(201,244,90,0)_70%)]"
       />
 
+      {compact && (
+        <div className="relative flex w-full max-w-[300px] items-center justify-between border-b border-[#111111]/25 pb-2 text-[8px] uppercase tracking-[0.14em] text-[#111111]/50">
+          <span>Form / 01</span>
+          <span>Idle</span>
+        </div>
+      )}
+
       <div className="relative flex flex-col items-center gap-3">
         <SubmitButton
           locale={locale}
@@ -47,58 +59,66 @@ export function SubmitButtonDemo({ params, locale }: SubmitButtonDemoProps) {
           simulateError={simulateError}
           onSettled={setLastResult}
         />
-        <p className="h-4 text-[11px] leading-4 tracking-[0.01em] text-faint">
-          {zh
-            ? "点击按钮，观察收起 → 加载环 → 对勾的三段变形"
-            : "Click to watch the label collapse, the ring spin, then the check draw"}
-        </p>
+        {!compact && (
+          <p className="h-4 text-[11px] leading-4 tracking-[0.01em] text-faint">
+            {zh
+              ? "点击按钮，观察收起 → 加载环 → 对勾的三段变形"
+              : "Click to watch the label collapse, the ring spin, then the check draw"}
+          </p>
+        )}
       </div>
 
-      <div className="relative flex flex-col items-center gap-3 text-[11px]">
-        <label className="flex cursor-pointer select-none items-center gap-2.5 text-muted">
-          <span>{zh ? "模拟提交失败" : "Simulate failure"}</span>
-          <input
-            type="checkbox"
-            role="switch"
-            checked={simulateError}
-            onChange={(event) => {
-              setSimulateError(event.target.checked);
-              setLastResult(null);
-            }}
-            className="peer sr-only"
-          />
-          <span
-            aria-hidden="true"
-            className={`relative h-[18px] w-[32px] rounded-full border transition-colors peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-[#C9F45A] ${
-              simulateError
-                ? "border-[#f87171]/50 bg-[#f87171]/20"
-                : "border-line bg-surface-2"
-            }`}
-          >
-            <span
-              className={`absolute left-[3px] top-1/2 h-[10px] w-[10px] -translate-y-1/2 rounded-full transition-transform ${
-                simulateError
-                  ? "translate-x-[14px] bg-[#f87171]"
-                  : "translate-x-0 bg-muted"
-              }`}
+      {compact ? (
+        <p className="relative text-[8px] uppercase tracking-[0.14em] text-[#111111]/45">
+          {zh ? "点击提交 / 三段变形" : "Press to send / three-stage morph"}
+        </p>
+      ) : (
+        <div className="relative flex flex-col items-center gap-3 text-[11px]">
+          <label className="flex cursor-pointer select-none items-center gap-2.5 text-muted">
+            <span>{zh ? "模拟提交失败" : "Simulate failure"}</span>
+            <input
+              type="checkbox"
+              role="switch"
+              checked={simulateError}
+              onChange={(event) => {
+                setSimulateError(event.target.checked);
+                setLastResult(null);
+              }}
+              className="peer sr-only"
             />
-          </span>
-        </label>
+            <span
+              aria-hidden="true"
+              className={`relative h-[18px] w-[32px] rounded-full border transition-colors peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-[#C9F45A] ${
+                simulateError
+                  ? "border-[#f87171]/50 bg-[#f87171]/20"
+                  : "border-line bg-surface-2"
+              }`}
+            >
+              <span
+                className={`absolute left-[3px] top-1/2 h-[10px] w-[10px] -translate-y-1/2 rounded-full transition-transform ${
+                  simulateError
+                    ? "translate-x-[14px] bg-[#f87171]"
+                    : "translate-x-0 bg-muted"
+                }`}
+              />
+            </span>
+          </label>
 
-        <p className="mono-label h-4 text-faint" aria-live="polite">
-          {lastResult === "success"
-            ? zh
-              ? "上次结果：成功"
-              : "Last result: success"
-            : lastResult === "error"
+          <p className="mono-label h-4 text-faint" aria-live="polite">
+            {lastResult === "success"
               ? zh
-                ? "上次结果：失败"
-                : "Last result: failure"
-              : zh
-                ? "上次结果：等待提交"
-                : "Last result: waiting"}
-        </p>
-      </div>
+                ? "上次结果：成功"
+                : "Last result: success"
+              : lastResult === "error"
+                ? zh
+                  ? "上次结果：失败"
+                  : "Last result: failure"
+                : zh
+                  ? "上次结果：等待提交"
+                  : "Last result: waiting"}
+          </p>
+        </div>
+      )}
     </div>
   );
 }

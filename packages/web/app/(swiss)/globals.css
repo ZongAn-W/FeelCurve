@@ -453,3 +453,440 @@ input[type="range"]:active::-webkit-slider-thumb {
     transition-duration: 0.001ms !important;
   }
 }
+
+/* ---------------------------------------------------------------------
+   Live specimen scope
+   The demos are shared with the classic front end. This scope re-themes
+   them only inside the Swiss preview plates: ink ground, paper type,
+   one red accent, square geometry.
+   ------------------------------------------------------------------ */
+
+.swissDemo {
+  color-scheme: dark;
+  background: var(--ink);
+  --color-void: #111111;
+  --color-surface: #151515;
+  --color-surface-2: #1c1c1c;
+  --color-surface-3: #242424;
+  --color-line: rgba(242, 239, 232, 0.2);
+  --color-ink: #f2efe8;
+  --color-muted: rgba(242, 239, 232, 0.62);
+  --color-faint: rgba(242, 239, 232, 0.42);
+  --color-accent: #da291c;
+  --color-accent-dim: #b32118;
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+}
+
+.swissDemo button,
+.swissDemo [class*="rounded"] {
+  border-radius: 0 !important;
+}
+
+.swissDemo[data-surface="paper"] {
+  color-scheme: light;
+  --color-void: #e9e4d9;
+  --color-surface: #f2efe8;
+  --color-surface-2: #ded8cb;
+  --color-surface-3: #d2ccbe;
+  --color-line: rgba(17, 17, 17, 0.22);
+  --color-ink: #111111;
+  --color-muted: rgba(17, 17, 17, 0.64);
+  --color-faint: rgba(17, 17, 17, 0.44);
+  color: var(--color-ink);
+  background: #e9e4d9;
+}
+
+.swissDemo button:focus-visible {
+  outline-color: var(--red);
+}
+
+/* Remove copy written for the old dark site when the object sits in a card. */
+.swissCard [data-preview-hint] {
+  display: none !important;
+}
+
+.swissDemo [data-demo="magnetic-button"] button {
+  border: 1px solid var(--red);
+  background: var(--red) !important;
+  color: var(--paper) !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.01em;
+}
+
+.swissDemo [data-demo="magnetic-button"] button:hover {
+  background: var(--paper) !important;
+  color: var(--ink) !important;
+}
+
+.swissDemo [data-demo="spotlight-card"] [class*="rounded-full"] {
+  border-color: rgba(242, 239, 232, 0.24) !important;
+}
+
+.swissDemo [data-demo="jelly-toggle"] [class*="bg-[#c9f45a]"] {
+  background: var(--red) !important;
+}
+
+.swissDemo [data-demo="toast-exit"] [data-push="success"] {
+  background: var(--red) !important;
+  color: var(--paper) !important;
+}
+
+.swissDemo [data-demo="toast-exit"] [data-push="error"] {
+  border-color: rgba(218, 41, 28, 0.55) !important;
+  color: #ef8f85 !important;
+}
+
+.swissCard [data-demo="liquid-glass-button"] > div {
+  max-width: 100% !important;
+  min-height: 0 !important;
+}
+
+.swissCard [data-demo="submit-button"] {
+  min-height: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+}
+
+.swissCard [data-demo="submit-button"] > div:first-child {
+  display: none !important;
+}
+
+.swissCard [data-demo="jelly-toggle"],
+.swissCard [data-demo="hold-to-delete"] {
+  min-height: 0 !important;
+}
+
+.swissCard [data-demo="animated-number"],
+.swissCard [data-demo="digit-roller"] {
+  max-width: 300px !important;
+}
+
+.swissCard [data-demo="hold-to-delete"] button[data-state="idle"] {
+  border-color: var(--ink) !important;
+  background: var(--ink) !important;
+  color: var(--paper) !important;
+  font-weight: 700 !important;
+}
+
+.swissCard [data-demo="hold-to-delete"] button[data-state="deleted"] {
+  border-color: var(--red) !important;
+  background: var(--red) !important;
+  color: var(--paper) !important;
+  font-weight: 700 !important;
+}
+
+.swissCard [data-demo="hold-to-delete"] svg rect:first-of-type {
+  stroke: rgba(17, 17, 17, 0.24) !important;
+}
+
+.swissCard [data-demo="hold-to-delete"] svg rect:last-of-type {
+  stroke: var(--red) !important;
+}
+
+.swissCard [data-demo="jelly-toggle"] button[role="switch"] > span:first-of-type {
+  border-color: rgba(242, 239, 232, 0.32) !important;
+  background: #1c1c1c !important;
+}
+
+.swissCard [data-demo="jelly-toggle"] button[role="switch"][aria-checked="true"] > span:first-of-type {
+  border-color: var(--red) !important;
+  background: var(--red) !important;
+}
+
+.swissCard [data-demo="jelly-toggle"] button[role="switch"] > span:nth-of-type(2) {
+  background: var(--paper) !important;
+  box-shadow: none !important;
+}
+
+.swissCard [data-demo="jelly-toggle"] button[role="switch"][aria-checked="true"] + p span {
+  color: var(--red) !important;
+}
+
+.swissCard [data-demo="submit-button"] button {
+  font-weight: 700 !important;
+}
+
+.swissCard [data-demo="stagger-list"] {
+  width: 360px !important;
+}
+
+.swissCard [data-demo="stagger-list"] .panel,
+.swissCard [data-demo="toast-exit"] .panel {
+  border: 0 !important;
+  background: transparent !important;
+  padding: 0 !important;
+}
+
+.swissCard [data-demo="toast-exit"] > div {
+  height: auto !important;
+  min-height: 250px;
+}
+
+.swissCard [data-demo="skeleton-shimmer"] {
+  max-width: 320px !important;
+}
+
+.swissDemo [data-demo] p,
+.swissDemo [data-demo] span {
+  text-wrap: balance;
+}
+
+.swissDemo [data-demo="staggered-text"] {
+  text-align: left !important;
+}
+
+.swissDemo [data-demo="staggered-text"] p,
+.swissDemo [data-demo="staggered-text"] p > span {
+  text-wrap: nowrap;
+  white-space: nowrap;
+}
+
+/* Navigation specimen: red indicator, square surfaces. */
+.swissCard [data-demo="nav-indicator"] > div:first-of-type {
+  border-color: rgba(242, 239, 232, 0.16) !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+.swissCard [data-demo="nav-indicator"] .fc-nav-indicator-tab {
+  border-radius: 0 !important;
+}
+
+.swissCard [data-demo="nav-indicator"] .fc-nav-indicator-tab[aria-selected="true"] {
+  color: var(--paper) !important;
+  background: rgba(242, 239, 232, 0.08) !important;
+}
+
+.swissCard [data-demo="nav-indicator"] .fc-nav-indicator-bar {
+  border-radius: 0 !important;
+  background: var(--red) !important;
+  box-shadow: none !important;
+}
+
+.swissCard [data-demo="nav-indicator"] [role="tabpanel"] {
+  border-color: rgba(242, 239, 232, 0.16) !important;
+  border-radius: 0 !important;
+  background: #181818 !important;
+}
+
+.swissCard [data-demo="nav-indicator"] [role="tabpanel"] p:first-child {
+  color: var(--red) !important;
+}
+
+/* Modal specimen: red primary action, square corners. */
+.swissCard [data-demo="modal-entrance"] [data-demo-open] {
+  border-radius: 0 !important;
+  border-color: var(--red) !important;
+  background: var(--red) !important;
+  color: var(--paper) !important;
+  font-weight: 700 !important;
+}
+
+.swissCard [data-demo="modal-entrance"] [role="dialog"] button:last-child {
+  border-radius: 0 !important;
+  border-color: var(--red) !important;
+  background: var(--red) !important;
+  color: var(--paper) !important;
+}
+
+/* Theme reveal specimen: no decorative gradient, red accent. */
+.swissCard [data-demo="theme-reveal"] .tr-stage {
+  border-radius: 0 !important;
+  background: #111111 !important;
+  --tr-accent: #da291c;
+}
+
+.swissCard [data-demo="theme-reveal"] .tr-stage[data-theme="light"] {
+  background: #f2efe8 !important;
+  --tr-accent: #da291c;
+}
+
+.swissCard [data-demo="theme-reveal"] .tr-bar,
+.swissCard [data-demo="theme-reveal"] .tr-card,
+.swissCard [data-demo="theme-reveal"] .tr-chip {
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+.swissCard [data-demo="theme-reveal"] button {
+  border-radius: 0 !important;
+  border-color: var(--red) !important;
+  background: var(--red) !important;
+  color: var(--paper) !important;
+}
+
+/* Liquid glass: make the object a flat stage, not a floating card. */
+.swissCard [data-demo="liquid-glass-button-stage"] > div:first-of-type {
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  border-color: rgba(242, 239, 232, 0.22) !important;
+}
+
+.swissCard [data-demo="liquid-glass-button-stage"] > div:first-of-type > div[aria-hidden]
+  ~ div[aria-hidden] {
+  display: none !important;
+}
+
+.swissCard [data-demo="toast-exit"] > div:first-child {
+  height: 248px !important;
+  min-height: 248px !important;
+  border: 0 !important;
+  background: transparent !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+.swissCard [data-demo="toast-exit"] > div:first-child > div[aria-hidden] {
+  top: 0;
+  bottom: 0;
+}
+
+/* Notification specimen: red signal, no legacy lime or floating shadow. */
+.swissDemo [data-toast] {
+  border-color: rgba(218, 41, 28, 0.4) !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+.swissDemo [data-toast] > span:first-child {
+  border-color: rgba(218, 41, 28, 0.55) !important;
+  color: var(--red) !important;
+}
+
+.swissDemo [data-toast] > button {
+  border-radius: 0 !important;
+}
+
+/* The paper plate needs ink type even when the demo carries its own
+   legacy light colour for the classic dark surface. */
+.swissDemo[data-surface="paper"] [data-demo="staggered-text"] p {
+  color: #111111 !important;
+}
+
+.swissDemo[data-surface="paper"] [data-demo="staggered-text"] button {
+  border-color: rgba(17, 17, 17, 0.28) !important;
+  border-radius: 0 !important;
+  color: rgba(17, 17, 17, 0.66) !important;
+}
+
+.swissDemo[data-surface="paper"] [data-demo="staggered-text"] button:hover {
+  border-color: var(--red) !important;
+  color: var(--red) !important;
+}
+
+/* Detail surfaces keep the same accents as the gallery plates. */
+.swissDemo [data-demo="nav-indicator"] .fc-nav-indicator-tab {
+  border-radius: 0 !important;
+}
+
+.swissDemo [data-demo="nav-indicator"] .fc-nav-indicator-tab[aria-selected="true"] {
+  color: var(--paper) !important;
+  background: rgba(242, 239, 232, 0.08) !important;
+}
+
+.swissDemo [data-demo="nav-indicator"] .fc-nav-indicator-bar {
+  border-radius: 0 !important;
+  background: var(--red) !important;
+  box-shadow: none !important;
+}
+
+.swissDemo [data-demo="nav-indicator"] [role="tabpanel"] {
+  border-radius: 0 !important;
+  border-color: rgba(242, 239, 232, 0.16) !important;
+  background: #181818 !important;
+}
+
+.swissDemo [data-demo="nav-indicator"] [role="tabpanel"] p:first-child {
+  color: var(--red) !important;
+}
+
+.swissDemo [data-demo="nav-indicator"] [role="tabpanel"] p:last-child {
+  color: rgba(242, 239, 232, 0.62) !important;
+}
+
+.swissDemo [data-demo="nav-indicator"] [data-demo-narrow] {
+  border-radius: 0 !important;
+  border-color: rgba(242, 239, 232, 0.18) !important;
+  color: var(--paper) !important;
+}
+
+.swissDemo [data-demo="modal-entrance"] [data-demo-open],
+.swissDemo [data-demo="modal-entrance"] [role="dialog"] button:last-child {
+  border-radius: 0 !important;
+  border-color: var(--red) !important;
+  background: var(--red) !important;
+  color: var(--paper) !important;
+  font-weight: 700 !important;
+}
+
+.swissDemo [data-demo="theme-reveal"] .tr-stage {
+  border-radius: 0 !important;
+  background: #111111 !important;
+  --tr-accent: #da291c;
+}
+
+.swissDemo [data-demo="theme-reveal"] .tr-stage[data-theme="light"] {
+  background: #f2efe8 !important;
+  --tr-accent: #da291c;
+}
+
+.swissDemo [data-demo="theme-reveal"] .tr-bar,
+.swissDemo [data-demo="theme-reveal"] .tr-card {
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+.swissDemo [data-demo="theme-reveal"] .tr-chip {
+  display: none !important;
+}
+
+.swissDemo [data-demo="theme-reveal"] .tr-url,
+.swissDemo [data-demo="theme-reveal"] .tr-dot {
+  border-radius: 0 !important;
+}
+
+.swissDemo [data-demo="theme-reveal"] button {
+  border-radius: 0 !important;
+  border-color: var(--red) !important;
+  background: var(--red) !important;
+  color: var(--paper) !important;
+}
+
+.swissDemo[data-surface="paper"] [data-demo="submit-button"] button[data-phase="idle"] {
+  border-color: var(--red) !important;
+  background: var(--red) !important;
+  color: var(--paper) !important;
+  font-weight: 700 !important;
+}
+
+.swissDemo[data-surface="paper"] [data-demo="hold-to-delete"] button[data-state="idle"] {
+  border-color: var(--ink) !important;
+  background: var(--ink) !important;
+  color: var(--paper) !important;
+  font-weight: 700 !important;
+}
+
+.swissDemo [data-demo="liquid-glass-button-stage"] > div:first-of-type {
+  border-radius: 0 !important;
+  border-color: rgba(242, 239, 232, 0.2) !important;
+  box-shadow: none !important;
+}
+
+.swissDemo [data-demo="nav-indicator"] * {
+  border-radius: 0 !important;
+}
+
+.swissDemo [data-demo="nav-indicator"] > div > div:last-child span,
+.swissDemo [data-demo="nav-indicator"] > div > p {
+  color: rgba(242, 239, 232, 0.56) !important;
+}
+
+.swissDemo[data-surface="paper"] [data-demo="submit-button"] p {
+  color: rgba(17, 17, 17, 0.62) !important;
+}
+
+.swissDemo[data-surface="paper"] [data-demo="hold-to-delete"] > div:last-child p,
+.swissDemo[data-surface="paper"] [data-demo="hold-to-delete"] .mono-label {
+  color: rgba(17, 17, 17, 0.58) !important;
+}

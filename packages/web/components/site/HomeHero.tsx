@@ -141,7 +141,7 @@ export function HomeHero() {
               </Link>
             </div>
 
-            <div className={styles.stage}>
+            <div className={`${styles.stage} swissDemo`} data-surface="paper">
               <span className={styles.stageIndex} aria-hidden>
                 {content.drag}
               </span>

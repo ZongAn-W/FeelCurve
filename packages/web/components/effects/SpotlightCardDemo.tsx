@@ -12,9 +12,11 @@ import type { Locale } from "@/lib/i18n";
 export function SpotlightCardDemo({
   params,
   locale,
+  compact = false,
 }: {
   params: Params;
   locale: Locale;
+  compact?: boolean;
 }) {
   return (
     <SpotlightCard
@@ -43,15 +45,17 @@ export function SpotlightCardDemo({
         SPOTLIGHT.defaults.borderHighlight,
       )}
       footer={
-        <span className="inline-flex items-center gap-2 rounded-full border border-white/10 px-3 py-1.5 text-[11px] text-[#9A9CA1]">
-          <span className="h-1 w-1 rounded-full bg-[#C9F45A]" />
-          <span className="pointer-only">
-            {locale === "zh" ? "指针进入卡片试试" : "Move your pointer in"}
+        compact ? undefined : (
+          <span className="inline-flex items-center gap-2 rounded-full border border-white/10 px-3 py-1.5 text-[11px] text-[#9A9CA1]">
+            <span className="h-1 w-1 rounded-full bg-[#C9F45A]" />
+            <span className="pointer-only">
+              {locale === "zh" ? "指针进入卡片试试" : "Move your pointer in"}
+            </span>
+            <span className="touch-only">
+              {locale === "zh" ? "在卡片上拖动试试" : "Drag across the card"}
+            </span>
           </span>
-          <span className="touch-only">
-            {locale === "zh" ? "在卡片上拖动试试" : "Drag across the card"}
-          </span>
-        </span>
+        )
       }
     />
   );
