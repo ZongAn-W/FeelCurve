@@ -24,7 +24,7 @@ const copy = {
     clearSearch: "清空搜索",
     categories: "按类型筛选效果",
     clearFilters: "清除筛选",
-    open: "调参 →",
+    open: "调参",
     copyPrompt: "复制提示词",
     copied: "已复制",
     copyFailed: "复制失败",
@@ -41,7 +41,7 @@ const copy = {
     clearSearch: "Clear search",
     categories: "Filter effects by type",
     clearFilters: "Clear filters",
-    open: "Tune →",
+    open: "Tune",
     copyPrompt: "Copy prompt",
     copied: "Copied",
     copyFailed: "Copy failed",
@@ -124,9 +124,6 @@ function EffectCard({ module, locale, content, categoryLabel, index }: CardProps
         <h3 id={`effect-card-${spec.slug}`}>
           <Link href={`/effects/${spec.slug}`} data-effect-link={spec.slug}>
             {spec.name[locale]}
-            <span className={styles.arrow} aria-hidden>
-              ↗
-            </span>
           </Link>
         </h3>
         <p className={styles.tagline}>{spec.tagline[locale]}</p>
@@ -286,7 +283,6 @@ export function EffectLibrary() {
               <p>{content.emptyDescription}</p>
               <button type="button" onClick={clearFilters}>
                 {content.clearFilters}
-                <span aria-hidden>→</span>
               </button>
             </div>
           )}
@@ -306,7 +302,7 @@ export function EffectLibrary() {
             </aside>
           )}
           <p className={styles.endMark}>
-            FEELCURVE / MOTION INDEX <span aria-hidden>↗</span>
+            FEELCURVE / MOTION INDEX
           </p>
         </div>
       </div>

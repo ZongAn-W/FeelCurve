@@ -25,6 +25,10 @@ export function CommandPalette() {
   const [query, setQuery] = useState("");
   const [active, setActive] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
+  const hint =
+    locale === "zh"
+      ? "方向键选择 · Enter 打开 · Esc 关闭"
+      : "Arrow keys to move · Enter to open · Esc to close";
 
   const results = useMemo(() => {
     const needle = query.trim().toLowerCase();
@@ -161,7 +165,6 @@ export function CommandPalette() {
                         </span>
                         <span className={styles.itemMeta}>
                           {group?.label[locale]}
-                          <span aria-hidden>→</span>
                         </span>
                       </button>
                     );
@@ -170,7 +173,7 @@ export function CommandPalette() {
               </div>
 
               <div className={styles.footer}>
-                <span>{t.command.hint}</span>
+                <span>{hint}</span>
                 <span>
                   {results.length} {t.command.results}
                 </span>

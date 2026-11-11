@@ -267,7 +267,6 @@ function EffectWorkbench({ module, sourceCode }: { module: EffectModule; sourceC
                 onClick={() => setOutputTab("prompt")}
               >
                 {locale === "zh" ? "查看提示词" : "View prompt"}
-                <span aria-hidden>↓</span>
               </a>
             </div>
 

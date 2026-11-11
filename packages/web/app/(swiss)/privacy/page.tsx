@@ -39,10 +39,10 @@ export default function PrivacyPage() {
             </p>
             <div className={styles.backlinks}>
               <Link href="/">
-                回首页 <span>↖</span>
+                回首页
               </Link>
               <Link href="/#effects">
-                效果库 <span>↗</span>
+                效果库
               </Link>
             </div>
           </header>

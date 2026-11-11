@@ -20,10 +20,7 @@ const copy = {
     drag: "指针靠近按钮",
     note: "真实组件，可在页面内直接操作。",
     location: "苏黎世 47.3769° N",
-    location2: "上海 31.2304° N",
     year: "2026",
-    edition: "第 01 版",
-    archive: "动效档案",
   },
   en: {
     lead: "Find an effect you love. Tune it live, then bring the prompt to your AI coding tool.",
@@ -34,10 +31,7 @@ const copy = {
     drag: "Move the pointer in",
     note: "A real component. Use it right here.",
     location: "Zürich 47.3769° N",
-    location2: "Shanghai 31.2304° N",
     year: "2026",
-    edition: "Edition 01",
-    archive: "Motion archive",
   },
 } as const;
 
@@ -50,23 +44,6 @@ export function HomeHero() {
   return (
     <section className={styles.hero} aria-labelledby="home-title">
       <div className={`shell ${styles.inner}`}>
-        <div className={styles.masthead}>
-          <p className={styles.kicker}>
-            <span className={styles.redSquare} aria-hidden />
-            {t.hero.eyebrow}
-          </p>
-          <p className={styles.coords}>
-            {content.location}
-            <br />
-            {content.location2}
-          </p>
-          <p className={styles.edition}>
-            {content.archive}
-            <br />
-            {content.year} / {content.edition}
-          </p>
-        </div>
-
         <h1
           id="home-title"
           className={`${styles.title} ${locale === "en" ? styles.titleEnglish : ""}`}
@@ -102,11 +79,9 @@ export function HomeHero() {
           <div className={styles.actions}>
             <a href="#effects" className={styles.primary}>
               {content.browse}
-              <span aria-hidden>↓</span>
             </a>
             <Link href={`/effects/${FEATURED}`} className={styles.secondary}>
               {content.try}
-              <span aria-hidden>↗</span>
             </Link>
           </div>
         </div>
@@ -137,7 +112,6 @@ export function HomeHero() {
               <p className={styles.specimenNote}>{content.note}</p>
               <Link href={`/effects/${FEATURED}`} className={styles.specimenLink}>
                 {locale === "zh" ? "打开样板" : "Open specimen"}
-                <span aria-hidden>↗</span>
               </Link>
             </div>
 

@@ -38,10 +38,10 @@ export default function NotFound() {
             </p>
             <div className={styles.actions}>
               <a href="/" className={styles.action}>
-                回首页 <span>↖</span>
+                回首页
               </a>
               <a href="/#effects" className={styles.action}>
-                逛效果库 <span>↗</span>
+                逛效果库
               </a>
             </div>
           </div>

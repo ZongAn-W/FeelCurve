@@ -44,12 +44,6 @@ export function TopBar({ compact = false }: { compact?: boolean }) {
           </Link>
         </div>
 
-        <p className={styles.edition} aria-hidden>
-          MOTION → PROMPT
-          <br />
-          ARCHIVE / 2026
-        </p>
-
         <nav
           className={styles.nav}
           aria-label={locale === "zh" ? "主导航" : "Main navigation"}
@@ -88,7 +82,7 @@ export function TopBar({ compact = false }: { compact?: boolean }) {
             className={styles.github}
             aria-label={t.nav.github}
           >
-            GH<span aria-hidden>↗</span>
+            GH
           </a>
 
           <button
@@ -108,7 +102,6 @@ export function TopBar({ compact = false }: { compact?: boolean }) {
             aria-label={locale === "zh" ? "切换到经典版前端" : "Switch to classic frontend"}
           >
             {locale === "zh" ? "经典版" : "Classic"}
-            <span aria-hidden>↖</span>
           </Link>
 
           <Link href={`/effects/${FIRST_EFFECT}`} className={styles.cta}>
@@ -116,7 +109,6 @@ export function TopBar({ compact = false }: { compact?: boolean }) {
             <span className={styles.ctaShort}>
               {locale === "zh" ? "调参" : "Tune"}
             </span>
-            <span aria-hidden>↗</span>
           </Link>
         </div>
       </div>
